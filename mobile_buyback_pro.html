@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Buyback Pro">
-<title>Mobile Buyback Pro v5.1</title>
+<title>Mobile Buyback Pro v5.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -154,8 +154,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
 <body>
 <div id="loginScreen">
   <div class="login-logo">M</div>
-  <div class="login-title">Mobile Buyback Pro</div>
-  <div class="login-sub">เลือกบทบาทการเข้าใช้งาน</div>
+  <div class="login-title">ขายไอโฟน.com</div>
+  <div class="login-sub">ระบบรับซื้ออุปกรณ์มือสอง | The Plant รังสิต</div>
   <div class="role-buttons">
     <button class="role-btn" id="roleStaff" type="button">
       <div class="role-btn-icon">&#128100;</div>
@@ -193,7 +193,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
     <div class="pin-error" id="pinError"></div>
     <button class="pin-back" type="button" id="pinBack">&#8592; เลือกบทบาทใหม่</button>
   </div>
-  <div class="login-version">Mobile Buyback Pro v5.1 | PIN: 1234</div>
+  <div class="login-version">Mobile Buyback Pro v5.2</div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -208,8 +208,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
     <div class="brand">
       <div class="brand-logo">M</div>
       <div>
-        <div class="brand-name">Mobile Buyback Pro</div>
-        <div class="brand-sub">PROFESSIONAL PURCHASE SYSTEM</div>
+        <div class="brand-name">ขายไอโฟน.com</div>
+        <div class="brand-sub">ระบบรับซื้ออุปกรณ์มือสอง</div>
       </div>
     </div>
     <div class="header-right">
@@ -543,7 +543,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
   <div class="card">
     <div class="card-header"><div class="ch-icon">&#8505;</div><div><div class="ch-title">เกี่ยวกับระบบ</div></div></div>
     <div class="card-body">
-      <div class="setting-row"><div class="setting-label">เวอร์ชัน</div><span style="font-family:'IBM Plex Mono',monospace;font-size:13px">v5.1 Final</span></div>
+      <div class="setting-row"><div class="setting-label">เวอร์ชัน</div><span style="font-family:'IBM Plex Mono',monospace;font-size:13px">v5.2</span></div>
       <div class="setting-row"><div class="setting-label">กฎหมายที่อ้างอิง</div><span style="font-size:12px;color:var(--text3);text-align:right">ป.พ.พ. 453, PDPA 2562</span></div>
       <div class="setting-row" style="border:none"><div class="setting-label">ติดตั้งบน iPhone</div><span style="font-size:12px;color:var(--text3)">Share &#8594; Add to Home Screen</span></div>
     </div>
@@ -555,6 +555,15 @@ input:checked+.tslider:before{transform:translateX(18px)}
   <button class="btn btn-primary" type="button" id="btnNext">ถัดไป &#8594;</button>
 </div>
 </div>
+
+<!-- DETAIL MODAL -->
+<div id="detailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:flex-end;justify-content:center">
+  <div style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:700px;padding:20px;max-height:85vh;overflow-y:auto">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
 <script>
 (function() {
   // ===== STATE =====
@@ -640,6 +649,124 @@ input:checked+.tslider:before{transform:translateX(18px)}
       console.error('Load error:', err);
     });
   }
+
+  function fetchAndRender(callback) {
+    fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500', {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      }
+    }).then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (Array.isArray(data)) {
+        records = data.map(function(r) {
+          return {
+            docNo: r.doc_no,
+            date: r.date,
+            cName: r.customer_name,
+            cId: r.customer_id,
+            deviceFull: r.device,
+            dSerial: r.serial,
+            grade: r.grade,
+            price: r.price,
+            payMethod: r.pay_method,
+            staff: r.staff,
+            timestamp: new Date(r.created_at).getTime()
+          };
+        });
+        try { localStorage.setItem('mbp_v5', JSON.stringify(records.slice(0, 500))); } catch(e) {}
+      }
+      callback();
+    }).catch(function(err) {
+      console.error('fetchAndRender error:', err);
+      callback();
+    });
+  }
+
+  function showDetail(docNo) {
+    var r = records.filter(function(x) { return x.docNo === docNo; })[0];
+    if (!r) return;
+    var tagCls = { A: 'background:#f0fdf4;color:#15803d;border:1px solid #86efac', B: 'background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd', C: 'background:#fff7ed;color:#c2410c;border:1px solid #fdba74', D: 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5' };
+    var modal = document.getElementById('detailModal');
+    document.getElementById('detailBody').innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+        '<div><div style="font-size:16px;font-weight:700">' + r.cName + '</div>' +
+        '<div style="font-size:12px;color:var(--text3);font-family:monospace;margin-top:3px">' + r.docNo + '</div></div>' +
+        '<div style="font-size:20px;font-weight:700;color:var(--green)">฿' + (r.price||0).toLocaleString('th-TH') + '</div>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:12px">' +
+        '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">ข้อมูลผู้ขาย</div>' +
+        '<div style="font-size:13px;margin-bottom:4px"><strong>เลขบัตร:</strong> ' + r.cId + '</div>' +
+        '<div style="font-size:13px"><strong>วันที่:</strong> ' + r.date + '</div>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:12px">' +
+        '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">สินค้า</div>' +
+        '<div style="font-size:13px;margin-bottom:4px">' + r.deviceFull + '</div>' +
+        '<div style="font-size:12px;color:var(--text3);font-family:monospace;margin-bottom:4px">S/N: ' + r.dSerial + '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">' +
+          '<span style="display:inline-flex;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700;' + (tagCls[r.grade]||'') + '">เกรด ' + r.grade + '</span>' +
+          '<span style="display:inline-flex;padding:3px 10px;border-radius:4px;font-size:12px;background:var(--surface3);">' + r.payMethod + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:16px">' +
+        '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">พนักงาน</div>' +
+        '<div style="font-size:13px">' + (r.staff||'-') + '</div>' +
+      '</div>' +
+      '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e;margin-bottom:16px">' +
+        '⚠️ เอกสารที่สร้างใหม่จะไม่มีลายเซ็นและรูปบัตร เนื่องจากไม่ได้เก็บไว้บน Cloud' +
+      '</div>' +
+      '<button class="btn btn-primary" type="button" onclick="regenDoc(\'' + r.docNo + '\')" style="margin-bottom:8px">สร้างเอกสารใหม่ (ไม่มีลายเซ็น)</button>' +
+      '<button class="btn btn-secondary" type="button" onclick="closeDetail()">ปิด</button>';
+    modal.style.display = 'flex';
+  }
+
+  function closeDetail() {
+    document.getElementById('detailModal').style.display = 'none';
+  }
+
+  function regenDoc(docNo) {
+    var r = records.filter(function(x) { return x.docNo === docNo; })[0];
+    if (!r) return;
+    var css = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sarabun",sans-serif;max-width:720px;margin:0 auto;font-size:12px;color:#222;line-height:1.7}.lh{padding:16px 20px;display:flex;justify-content:space-between;align-items:flex-start}.body{padding:14px 20px}.sec{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:12px 0 7px;padding-bottom:3px;border-bottom:1.5px solid #eee}.grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 15px}.f{display:flex;flex-direction:column;margin-bottom:5px}.fl{font-size:9.5px;color:#999;text-transform:uppercase;letter-spacing:.5px}.fv{font-size:12px;font-weight:500;border-bottom:1px solid #eee;padding-bottom:2px;min-height:18px;margin-top:1px}.sig2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px;padding-top:10px;border-top:1px solid #eee}.sb{text-align:center}.sa{height:60px;border-bottom:1px solid #bbb;margin-bottom:4px}.sl{font-size:10px;color:#555;line-height:1.4}.note{background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:6px 10px;font-size:10px;color:#15803d;margin-top:8px}.foot{background:#f5f5f5;border-top:1px solid #eee;padding:7px 20px;font-size:10px;color:#aaa;display:flex;justify-content:space-between}';
+    var gradeCls = { A: 'background:#f0fdf4;color:#15803d;border:1px solid #86efac', B: 'background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd', C: 'background:#fff7ed;color:#c2410c;border:1px solid #fdba74', D: 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5' };
+    var gradeBadge = '<span style="' + (gradeCls[r.grade]||'') + ';display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700">เกรด ' + r.grade + '</span>';
+    var contractHTML =
+      '<div class="lh" style="background:#1a1a2e"><div><div style="font-size:15px;font-weight:700;color:#fff">สัญญาซื้อขายโทรศัพท์มือถือ</div><div style="font-size:10px;opacity:.65;color:#fff;margin-top:2px">สำเนาเอกสาร (ไม่มีลายเซ็น) - Mobile Buyback Pro</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:#c9a84c">CONTRACT (COPY)</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + r.docNo + '</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + r.date + '</div></div></div>' +
+      '<div class="body">' +
+      '<div class="sec">§1 ข้อมูลผู้ขาย</div>' +
+      '<div class="grid">' +
+        '<div class="f"><span class="fl">ชื่อ-นามสกุล</span><span class="fv">' + r.cName + '</span></div>' +
+        '<div class="f"><span class="fl">เลขบัตรประชาชน</span><span class="fv">' + r.cId + '</span></div>' +
+      '</div>' +
+      '<div class="sec">§2 รายละเอียดสินค้า</div>' +
+      '<div class="grid">' +
+        '<div class="f"><span class="fl">สินค้า</span><span class="fv">' + r.deviceFull + '</span></div>' +
+        '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + r.dSerial + '</span></div>' +
+        '<div class="f"><span class="fl">เกรดสภาพ</span><span class="fv">' + gradeBadge + '</span></div>' +
+      '</div>' +
+      '<div class="sec">§3 ราคาและการชำระเงิน</div>' +
+      '<div class="grid">' +
+        '<div class="f"><span class="fl">ราคาที่ตกลง</span><span class="fv" style="font-size:15px;font-weight:700">' + (r.price||0).toLocaleString('th-TH') + ' บาทถ้วน</span></div>' +
+        '<div class="f"><span class="fl">วิธีชำระ</span><span class="fv">' + r.payMethod + '</span></div>' +
+        '<div class="f"><span class="fl">วันที่ทำรายการ</span><span class="fv">' + r.date + '</span></div>' +
+        '<div class="f"><span class="fl">พนักงาน</span><span class="fv">' + (r.staff||'-') + '</span></div>' +
+      '</div>' +
+      '<div class="sig2"><div class="sb"><div class="sa"></div><div class="sl"><strong>ลายมือชื่อผู้ขาย</strong><br>' + r.cName + '</div></div>' +
+      '<div class="sb"><div class="sa"></div><div class="sl"><strong>ลายมือชื่อผู้ซื้อ / พนักงาน</strong><br>' + (r.staff||'-') + '</div></div></div>' +
+      '<div class="note">สำเนาเอกสาร -- ต้นฉบับที่มีลายเซ็นถูกบันทึกไว้ในระบบ -- ' + r.docNo + ' -- ' + r.date + '</div>' +
+      '</div>' +
+      '<div class="foot"><span>Mobile Buyback Pro - ' + r.docNo + '</span><span>สำเนาเอกสาร</span></div>';
+
+    var fontLink = '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">';
+    var full = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' + fontLink + '<style>' + css + '</style></head><body>' + contractHTML + '</body></html>';
+    var blob = new Blob([full], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = r.docNo + '-copy.html';
+    a.click();
+    toast('ดาวน์โหลดสำเนาแล้ว', 'ok');
+  }
+
   var pinInput = '';
   var canvBuyer = null, ctxBuyer = null;
   var canvSeller = null, ctxSeller = null;
@@ -840,8 +967,12 @@ input:checked+.tslider:before{transform:translateX(18px)}
       btn.className = 'nav-tab' + (t === id ? ' active' : '');
     });
     el('bottomBar').style.display = t === 'form' ? 'flex' : 'none';
-    if (t === 'dash') renderDash();
-    if (t === 'history') renderHistory();
+    if (t === 'dash') {
+      fetchAndRender(renderDash);
+    }
+    if (t === 'history') {
+      fetchAndRender(renderHistory);
+    }
     if (t === 'settings') el('recordCount').textContent = records.length + ' รายการ';
   }
 
@@ -1030,7 +1161,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
       return '<div class="f"><span class="fl">' + label + '</span><span class="fv">' + value + '</span></div>';
     }
 
-    var contractHTML = '<div class="lh" style="background:#1a1a2e"><div><div style="font-size:15px;font-weight:700;color:#fff">สัญญาซื้อขายโทรศัพท์มือถือ</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">Mobile Purchase Agreement - Mobile Buyback Pro</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#c9a84c">CONTRACT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + ' ' + timeStr + ' น.</div></div></div>';
+    var contractHTML = '<div class="lh" style="background:#1a1a2e"><div><div style="font-size:15px;font-weight:700;color:#fff">สัญญาซื้อขายโทรศัพท์มือถือ</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">ขายไอโฟน.com | The Plant วงแหวน-รังสิต เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี | โทร 095-553-5167 LINE: @khaiphone</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#c9a84c">CONTRACT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + ' ' + timeStr + ' น.</div></div></div>';
     contractHTML += '<div class="body">';
     contractHTML += '<div class="sec">§1 ข้อมูลผู้ขาย</div>' + idSec;
     contractHTML += '<div class="grid">' + fRow('ชื่อ-นามสกุล', cName) + fRow('เลขบัตรประชาชน', cId) + fRow('วันเกิด', cDob) + fRow('เบอร์โทรศัพท์', cPhone) + '<div class="f" style="grid-column:1/-1"><span class="fl">ที่อยู่</span><span class="fv">' + cAddr + '</span></div></div>';
@@ -1038,14 +1169,14 @@ input:checked+.tslider:before{transform:translateX(18px)}
     contractHTML += '<div class="sec">§2 รายละเอียดสินค้า</div>';
     contractHTML += '<div class="grid">' + fRow('ยี่ห้อ / รุ่น', dBrand + ' ' + dModel) + fRow('แหล่งที่มา', dOrigin) + fRow('ความจุ / สี', dStorage + ' / ' + dColor) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + dSerial + '</span></div>' + '<div class="f"><span class="fl">IMEI</span><span class="fv" style="font-family:monospace">' + dImei + '</span></div>' + fRow('เกรดสภาพ', gradeBadge) + fRow('สภาพหน้าจอ', sc_screen) + fRow('สภาพบอดี้', sc_body) + fRow('ฟังก์ชัน', sc_func + (funcProb ? ' - ' + funcProb : '')) + fRow('แบตเตอรี่', dBatt) + fRow('Apple ID / iCloud', dIcloud) + fRow('สถานะประกัน', warrantyFull) + fRow('ประวัติซ่อม', repairDetail) + fRow('อุปกรณ์ที่รับมาด้วย', accStr) + '<div class="f" style="grid-column:1/-1"><span class="fl">หมายเหตุ</span><span class="fv">' + dNote + '</span></div></div>';
     contractHTML += '<div class="sec">§3 ราคาและการชำระเงิน</div>';
-    contractHTML += '<div class="grid"><div class="f"><span class="fl">ราคาที่ตกลง</span><span class="fv" style="font-size:15px;font-weight:700">' + price.toLocaleString('th-TH') + ' บาทถ้วน</span></div>' + fRow('วิธีชำระ', payTh) + bankRow + fRow('วันที่ทำรายการ', dateStr) + fRow('พนักงาน', staff) + '</div>' + slipSec;
+    contractHTML += '<div class="grid"><div class="f"><span class="fl">ราคาที่ตกลง</span><span class="fv" style="font-size:15px;font-weight:700">' + price.toLocaleString('th-TH') + ' บาทถ้วน</span></div>' + fRow('วิธีชำระ', payTh) + bankRow + fRow('วันที่ทำรายการ', dateStr) + fRow('พนักงาน', staff) + fRow('ผู้ซื้อ (ร้าน)', 'ขายไอโฟน.com') + fRow('ที่อยู่ผู้ซื้อ', 'เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี 12130') + fRow('เบอร์โทร / LINE', '095-553-5167 / @khaiphone') + '</div>' + slipSec;
     contractHTML += '<div class="sec">§4 ข้อกำหนดและเงื่อนไข</div>';
     contractHTML += '<div class="terms">1. ผู้ขายรับรองว่าอุปกรณ์เป็นทรัพย์สินของตนโดยชอบด้วยกฎหมาย ไม่ได้มาจากการลักทรัพย์หรือผิดกฎหมายใดๆ (ป.อ. มาตรา 335, 357)<br>2. ผู้ขายยินยอมโอนกรรมสิทธิ์ทั้งสิ้นให้แก่ผู้ซื้อโดยเด็ดขาด (ป.พ.พ. มาตรา 453-459)<br>3. ผู้ขายรับทราบสภาพสินค้าตามที่ระบุ ยินยอมรับราคาโดยไม่มีข้อโต้แย้ง<br>4. ผู้ขายยินยอมให้เก็บข้อมูลตาม PDPA พ.ศ. 2562<br>5. สัญญานี้มีผลสมบูรณ์ตาม ป.พ.พ. มาตรา 453 โดยไม่ต้องมีพยาน</div>';
     contractHTML += '<div class="sig2"><div class="sb"><div class="sa"><img src="' + sigBuyImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ขาย</strong><br>' + cName + '<br>เลขบัตร: ' + cId + '</div></div><div class="sb"><div class="sa"><img src="' + sigSelImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ซื้อ / พนักงาน</strong><br>' + staff + '</div></div></div>';
     contractHTML += '<div class="note">สัญญาซื้อขายนี้สมบูรณ์ตาม ป.พ.พ. มาตรา 453 ทำต่อหน้ากัน ณ วันที่ ' + dateStr + ' เวลา ' + timeStr + ' น.</div>';
     contractHTML += '</div><div class="foot"><span>Mobile Buyback Pro - ' + docNo + '</span><span>เอกสารนี้มีผลผูกพันทางกฎหมาย</span></div>';
 
-    var receiptHTML = '<div class="lh" style="background:#14532d"><div><div style="font-size:15px;font-weight:700;color:#fff">ใบสำคัญรับเงิน</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">Payment Receipt - Mobile Buyback Pro</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#86efac">RECEIPT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '-R</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + '</div></div></div>';
+    var receiptHTML = '<div class="lh" style="background:#14532d"><div><div style="font-size:15px;font-weight:700;color:#fff">ใบสำคัญรับเงิน</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">ขายไอโฟน.com | The Plant วงแหวน-รังสิต เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี | โทร 095-553-5167 LINE: @khaiphone</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#86efac">RECEIPT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '-R</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + '</div></div></div>';
     receiptHTML += '<div class="body"><div class="sec">ข้อมูลการรับเงิน</div><div class="grid">' + '<div class="f"><span class="fl">ผู้รับเงิน (ผู้ขาย)</span><span class="fv" style="font-size:14px;font-weight:700">' + cName + '</span></div>' + fRow('เลขบัตรประชาชน', cId) + fRow('สินค้าที่ขาย', deviceFull) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + dSerial + '</span></div></div>';
     receiptHTML += '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:5px;padding:12px;text-align:center;margin:10px 0"><div style="font-size:10px;color:#555;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">จำนวนเงินที่ได้รับ</div><div style="font-size:26px;font-weight:800;color:#15803d;font-family:monospace">' + price.toLocaleString('th-TH') + ' บาทถ้วน</div><div style="font-size:11px;color:#555;margin-top:3px">ชำระโดย: ' + payTh + (payM === 'transfer' ? ' - ' + bankInfo : '') + '</div></div>';
     receiptHTML += '<div style="font-size:11px;color:#555;line-height:1.9;padding:7px;background:#fafafa;border-radius:4px;margin:7px 0">ข้าพเจ้าขอรับรองว่าได้รับเงินจำนวนดังกล่าวจาก <strong>' + staff + '</strong> เป็นค่าขายโทรศัพท์มือถือตามสัญญาเลขที่ ' + docNo + ' เรียบร้อยแล้ว โดยสมัครใจ ทำ ณ วันที่ ' + dateStr + ' เวลา ' + timeStr + ' น.</div>';
@@ -1116,7 +1247,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
     var f = records.filter(function(r) { return [r.cName, r.deviceFull, r.dSerial, r.docNo].join(' ').toLowerCase().indexOf(q) >= 0; });
     var tagCls = { A: 'background:#f0fdf4;color:#15803d;border-color:#86efac', B: 'background:#eff6ff;color:#1d4ed8;border-color:#93c5fd', C: 'background:#fff7ed;color:#c2410c;border-color:#fdba74', D: 'background:#fef2f2;color:#dc2626;border-color:#fca5a5' };
     el('histList').innerHTML = f.length ? f.map(function(r) {
-      return '<div class="hist-item"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;font-weight:600">' + r.cName + '</span><span style="color:var(--green);font-weight:700;font-family:monospace">฿' + (r.price || 0).toLocaleString('th-TH') + '</span></div><div style="font-size:12px;color:var(--text2);margin-bottom:3px">' + r.deviceFull + '</div><div style="display:flex;gap:7px;flex-wrap:wrap;font-size:11px;color:var(--text3)"><span style="font-family:monospace">' + r.docNo + '</span><span>' + r.date + '</span><span style="display:inline-flex;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid;' + (tagCls[r.grade] || '') + '">เกรด ' + r.grade + '</span><span>' + r.payMethod + '</span><span>' + (r.staff || '') + '</span></div></div>';
+      return '<div class="hist-item" onclick="showDetail(\'' + r.docNo + '\')" style="cursor:pointer"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;font-weight:600">' + r.cName + '</span><span style="color:var(--green);font-weight:700;font-family:monospace">฿' + (r.price || 0).toLocaleString('th-TH') + '</span></div><div style="font-size:12px;color:var(--text2);margin-bottom:3px">' + r.deviceFull + '</div><div style="display:flex;gap:7px;flex-wrap:wrap;font-size:11px;color:var(--text3)"><span style="font-family:monospace">' + r.docNo + '</span><span>' + r.date + '</span><span style="display:inline-flex;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid;' + (tagCls[r.grade] || '') + '">เกรด ' + r.grade + '</span><span>' + r.payMethod + '</span><span>' + (r.staff || '') + '</span></div></div>';
     }).join('') : '<div style="text-align:center;padding:40px;color:var(--text3)"><div style="font-size:36px;margin-bottom:8px">&#128205;</div><div>ไม่พบรายการ</div></div>';
   }
 
