@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Buyback Pro">
+<title>Mobile Buyback Pro v5.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#f7f6f3;--surface:#fff;--surface2:#f2f1ee;--accent:#1a1a2e;--accent2:#16213e;--gold:#c9a84c;--text:#1a1a1a;--text2:#555;--text3:#999;--green:#16a34a;--red:#dc2626;--blue:#1d4ed8;--border:#ddd;--border2:#e8e6e1;--radius:10px;--radius-sm:6px}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.app{max-width:700px;margin:0 auto;padding-bottom:80px}
+#loginScreen{position:fixed;inset:0;background:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:24px}
+.login-logo{width:72px;height:72px;background:var(--gold);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:var(--accent);margin-bottom:16px}
+.login-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
+.login-sub{font-size:13px;color:rgba(255,255,255,.55);margin-bottom:36px}
+.role-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:340px;margin-bottom:32px}
+.role-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:20px 12px;text-align:center;cursor:pointer;transition:all .2s;color:#fff;font-family:'Sarabun',sans-serif;width:100%}
+.role-btn:hover,.role-btn:active{background:rgba(201,168,76,.2);border-color:var(--gold)}
+.role-btn-icon{font-size:28px;margin-bottom:8px}
+.role-btn-name{font-size:14px;font-weight:600}
+.role-btn-sub{font-size:11px;opacity:.6;margin-top:3px}
+#pinWrap{width:100%;max-width:320px;display:none}
+.pin-label{font-size:13px;color:rgba(255,255,255,.6);text-align:center;margin-bottom:14px}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.3);transition:all .2s}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pin-key{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:16px;text-align:center;font-size:20px;font-weight:600;color:#fff;cursor:pointer;transition:all .15s;font-family:'IBM Plex Mono',monospace;width:100%}
+.pin-key:active{background:rgba(201,168,76,.3);transform:scale(.95)}
+.pin-key.del{font-size:16px;background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.3)}
+.pin-key.enter{background:rgba(201,168,76,.2);border-color:var(--gold);color:var(--gold)}
+.pin-error{color:#f87171;text-align:center;font-size:13px;margin-top:10px;min-height:20px}
+.pin-back{color:rgba(255,255,255,.5);text-align:center;font-size:13px;margin-top:16px;cursor:pointer;text-decoration:underline;background:none;border:none;width:100%;font-family:'Sarabun',sans-serif}
+.login-version{position:absolute;bottom:20px;font-size:11px;color:rgba(255,255,255,.3)}
+.header{background:var(--accent);color:#fff;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:11px 16px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-logo{width:32px;height:32px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--accent);flex-shrink:0}
+.brand-name{font-size:14px;font-weight:700}
+.brand-sub{font-size:10px;opacity:.55;margin-top:1px}
+.header-right{display:flex;align-items:center;gap:8px}
+.role-badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 10px;font-size:11px;color:rgba(255,255,255,.8);font-weight:500}
+.role-badge.owner{background:rgba(201,168,76,.2);border-color:rgba(201,168,76,.4);color:var(--gold)}
+.logout-btn{background:none;border:none;color:rgba(255,255,255,.5);font-size:12px;cursor:pointer;padding:4px 8px;font-family:'Sarabun',sans-serif}
+.doc-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:5px;padding:3px 8px}
+.nav-tabs{display:flex;background:rgba(255,255,255,.07);border-top:1px solid rgba(255,255,255,.1)}
+.nav-tab{flex:1;padding:9px 6px;background:none;border:none;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.nav-tab.active{color:#fff;border-bottom-color:var(--gold);font-weight:600}
+.nav-tab.hidden{display:none}
+.steps-bar{background:var(--surface);border-bottom:1px solid var(--border2);padding:9px 14px;display:flex;gap:3px;overflow-x:auto}
+.step-item{display:flex;align-items:center;gap:4px;flex-shrink:0;padding:5px 9px;border-radius:20px;cursor:pointer;transition:all .2s;font-size:11px;background:none;border:none;font-family:'Sarabun',sans-serif}
+.step-item.active{background:var(--accent);color:#fff;font-weight:600}
+.step-item.done{background:#dcfce7;color:var(--green);font-weight:500}
+.step-item.inactive{color:var(--text3)}
+.step-num{width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.step-item.active .step-num{background:rgba(255,255,255,.2)}
+.step-item.done .step-num{background:var(--green);color:#fff}
+.step-item.inactive .step-num{background:var(--border2);color:var(--text3)}
+.page{display:none;padding:14px;animation:si .2s ease}
+.page.active{display:block}
+@keyframes si{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.card-header{padding:10px 14px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:8px;background:var(--surface2)}
+.ch-icon{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;background:var(--accent);color:#fff;flex-shrink:0}
+.ch-title{font-size:13px;font-weight:700}
+.ch-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.card-body{padding:12px 14px}
+.field{margin-bottom:11px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.req{color:var(--red)}
+.field input,.field select,.field textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;color:var(--text);font-size:14px;font-family:'Sarabun',sans-serif;outline:none;transition:border .2s;-webkit-appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);background:#fff}
+.field textarea{resize:none;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cond-group{display:flex;flex-wrap:wrap;gap:6px}
+.cond-pill{padding:6px 13px;border-radius:var(--radius-sm);font-size:13px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .2s;font-family:'Sarabun',sans-serif;color:var(--text2);font-weight:500}
+.cond-pill.cp-green{background:#f0fdf4;border-color:#16a34a;color:#15803d;font-weight:600}
+.cond-pill.cp-blue{background:#eff6ff;border-color:#1d4ed8;color:#1d4ed8;font-weight:600}
+.cond-pill.cp-orange{background:#fff7ed;border-color:#ea580c;color:#c2410c;font-weight:600}
+.cond-pill.cp-red{background:#fef2f2;border-color:#dc2626;color:#dc2626;font-weight:600}
+.grade-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.grade-btn{border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 4px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);font-family:'Sarabun',sans-serif;width:100%}
+.grade-btn.sel{border-color:var(--accent);background:var(--accent);color:#fff}
+.grade-letter{font-size:18px;font-weight:700;display:block;margin-bottom:2px}
+.grade-lbl{font-size:11px}
+.pay-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:12px}
+.pay-tab{padding:10px;text-align:center;font-size:13px;font-weight:500;background:var(--surface2);border:none;cursor:pointer;font-family:'Sarabun',sans-serif;color:var(--text2);transition:all .2s}
+.pay-tab.active{background:var(--accent);color:#fff;font-weight:700}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.tslider{position:absolute;inset:0;background:var(--border);border-radius:11px;cursor:pointer;transition:.3s}
+.tslider:before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.tslider{background:var(--green)}
+input:checked+.tslider:before{transform:translateX(18px)}
+.scan-zone,.slip-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:all .2s;background:var(--surface2)}
+.scan-zone:hover,.slip-zone:hover{border-color:var(--accent)}
+.scan-zone input,.slip-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.slip-zone{padding:12px}
+.preview-img{width:100%;border-radius:var(--radius-sm);margin-top:8px;max-height:130px;object-fit:cover;display:none;border:1px solid var(--border)}
+.slip-preview-img{width:100%;max-height:160px;object-fit:contain;border-radius:var(--radius-sm);margin-top:8px;display:none;border:1px solid var(--border)}
+.price-box{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:var(--radius);padding:14px;text-align:center;margin-bottom:12px}
+.price-box-amt{font-size:30px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--gold)}
+.sig-canvas{width:100%;height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:crosshair;touch-action:none;display:block}
+.consent-box{background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:11px}
+.consent-row{display:flex;gap:10px;align-items:flex-start}
+.consent-row input[type=checkbox]{width:17px;height:17px;flex-shrink:0;margin-top:2px;cursor:pointer;accent-color:var(--accent)}
+.consent-text{font-size:12px;color:#78350f;line-height:1.6}
+.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-sm);padding:8px 11px;font-size:12px;color:var(--blue);line-height:1.6;margin-bottom:11px}
+.legal-box{background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--radius-sm);padding:9px 11px;font-size:12px;color:#92400e;line-height:1.6;margin-bottom:11px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:11px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;font-family:'Sarabun',sans-serif;border:none;cursor:pointer;transition:all .15s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-outline{background:transparent;color:var(--accent);border:1px solid var(--border)}
+.btn-sm{padding:8px 11px;font-size:12px;width:auto;flex:1}
+.btn-export{background:#f0fdf4;color:var(--green);border:1px solid #86efac}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:12px}
+.stat-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:13px}
+.stat-val{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--accent)}
+.stat-lbl{font-size:11px;color:var(--text3);margin-top:2px}
+.hist-item{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:11px 13px;margin-bottom:8px;transition:all .2s}
+.hist-item:hover{border-color:var(--accent)}
+.tag{display:inline-flex;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid}
+.tag-A{background:#f0fdf4;color:#15803d;border-color:#86efac}
+.tag-B{background:#eff6ff;color:#1d4ed8;border-color:#93c5fd}
+.tag-C{background:#fff7ed;color:#c2410c;border-color:#fdba74}
+.tag-D{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border2)}
+.setting-row:last-child{border:none}
+.setting-label{font-size:14px;font-weight:500}
+.setting-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:998;flex-direction:column}
+.overlay.show{display:flex}
+.spinner{width:38px;height:38px;border:3px solid rgba(255,255,255,.2);border-top:3px solid #fff;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:11px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-text{color:#fff;font-size:14px;font-weight:500}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--text);color:#fff;border-radius:var(--radius-sm);padding:9px 16px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;z-index:1001;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border2);padding:9px 14px;display:flex;gap:8px;max-width:700px;margin:0 auto;z-index:99;box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+.pdf-wrap{background:#fff;border:1px solid #ddd;border-radius:var(--radius);overflow:hidden;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.acc-lbl{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;background:var(--surface2);padding:6px 11px;border-radius:20px;border:1px solid var(--border)}
+.acc-lbl input{width:auto;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="loginScreen">
+  <div class="login-logo">M</div>
+  <div class="login-title">Mobile Buyback Pro</div>
+  <div class="login-sub">เลือกบทบาทการเข้าใช้งาน</div>
+  <div class="role-buttons">
+    <button class="role-btn" id="roleStaff" type="button">
+      <div class="role-btn-icon">&#128100;</div>
+      <div class="role-btn-name">พนักงาน</div>
+      <div class="role-btn-sub">ทำรายการรับซื้อ</div>
+    </button>
+    <button class="role-btn" id="roleOwner" type="button">
+      <div class="role-btn-icon">&#128081;</div>
+      <div class="role-btn-name">เจ้าของ / ผู้จัดการ</div>
+      <div class="role-btn-sub">เข้าถึงได้ทุกอย่าง</div>
+    </button>
+  </div>
+  <div id="pinWrap">
+    <div class="pin-label">ใส่ PIN เจ้าของ 4 หลัก</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-key" type="button" id="pk1">1</button>
+      <button class="pin-key" type="button" id="pk2">2</button>
+      <button class="pin-key" type="button" id="pk3">3</button>
+      <button class="pin-key" type="button" id="pk4">4</button>
+      <button class="pin-key" type="button" id="pk5">5</button>
+      <button class="pin-key" type="button" id="pk6">6</button>
+      <button class="pin-key" type="button" id="pk7">7</button>
+      <button class="pin-key" type="button" id="pk8">8</button>
+      <button class="pin-key" type="button" id="pk9">9</button>
+      <button class="pin-key del" type="button" id="pkDel">&#9003;</button>
+      <button class="pin-key" type="button" id="pk0">0</button>
+      <button class="pin-key enter" type="button" id="pkEnter">เข้า</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <button class="pin-back" type="button" id="pinBack">&#8592; เลือกบทบาทใหม่</button>
+  </div>
+  <div class="login-version">Mobile Buyback Pro v5.1 | PIN: 1234</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+  <div class="spinner-text" id="overlayTxt">กำลังดำเนินการ...</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="app" id="mainApp" style="display:none">
+<div class="header">
+  <div class="header-top">
+    <div class="brand">
+      <div class="brand-logo">M</div>
+      <div>
+        <div class="brand-name">Mobile Buyback Pro</div>
+        <div class="brand-sub">PROFESSIONAL PURCHASE SYSTEM</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="role-badge" id="roleBadge"></div>
+      <button class="logout-btn" type="button" id="btnLogout">ออก</button>
+    </div>
+  </div>
+  <div style="padding:2px 16px 8px"><div class="doc-badge" id="docBadge">--</div></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" type="button" id="nt-form">ทำรายการ</button>
+    <button class="nav-tab hidden" type="button" id="nt-dash">Dashboard</button>
+    <button class="nav-tab hidden" type="button" id="nt-history">ประวัติ</button>
+    <button class="nav-tab hidden" type="button" id="nt-settings">ตั้งค่า</button>
+  </div>
+</div>
+<div id="formTab">
+<div class="steps-bar">
+  <button class="step-item active" type="button" id="sn1"><span class="step-num">1</span><span>บัตร ปชช.</span></button>
+  <button class="step-item inactive" type="button" id="sn2"><span class="step-num">2</span><span>ลูกค้า</span></button>
+  <button class="step-item inactive" type="button" id="sn3"><span class="step-num">3</span><span>สินค้า</span></button>
+  <button class="step-item inactive" type="button" id="sn4"><span class="step-num">4</span><span>ราคา &amp; ชำระ</span></button>
+  <button class="step-item inactive" type="button" id="sn5"><span class="step-num">5</span><span>เซ็น &amp; เอกสาร</span></button>
+</div>
+
+<div class="page active" id="page1">
+  <div class="legal-box">&#9878; <strong>ข้อกำหนดทางกฎหมาย:</strong> บันทึกข้อมูลผู้ขายตาม พ.ร.บ. ค้าของเก่า พ.ศ. 2474 -- สัญญา 2 ฝ่ายมีผลตาม ป.พ.พ. มาตรา 453 โดยไม่ต้องมีพยาน</div>
+  <div class="consent-box">
+    <div class="consent-row">
+      <input type="checkbox" id="pdpaConsent">
+      <div class="consent-text"><strong>ลูกค้ายินยอมให้เก็บรูปบัตรประชาชน</strong><br>ตาม PDPA พ.ศ. 2562</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128219;</div><div><div class="ch-title">ถ่ายรูปบัตรประชาชน</div><div class="ch-sub" id="idSub">ต้องให้ลูกค้ายินยอมก่อน</div></div></div>
+    <div class="card-body">
+      <div class="scan-zone" id="scanZone">
+        <input type="file" id="idFile" accept="image/*" capture="environment" disabled>
+        <div style="font-size:28px;margin-bottom:6px">&#128219;</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:3px">แตะเพื่อถ่ายรูปบัตรประชาชน</div>
+        <div style="font-size:11px;color:var(--text3)" id="scanHint">ต้องให้ลูกค้ายินยอมก่อน</div>
+        <img id="previewId" class="preview-img" alt="">
+      </div>
+      <div style="margin:9px 0;text-align:center;font-size:12px;color:var(--text3)">-- หรือกรอกเอง --</div>
+      <button class="btn btn-outline" type="button" id="btnShowIDForm" style="font-size:13px">กรอกข้อมูลด้วยตนเอง</button>
+    </div>
+  </div>
+  <div id="idFormWrap" style="display:none">
+    <div class="card">
+      <div class="card-header"><div class="ch-icon">&#9999;</div><div><div class="ch-title">ข้อมูลบัตรประชาชน</div></div></div>
+      <div class="card-body">
+        <div class="field"><label>ชื่อ-นามสกุล <span class="req">*</span></label><input type="text" id="id_name" placeholder="นายสมชาย ใจดี"></div>
+        <div class="field"><label>เลขบัตร 13 หลัก <span class="req">*</span></label><input type="text" id="id_idno" placeholder="X-XXXX-XXXXX-XX-X" maxlength="17" inputmode="numeric"></div>
+        <div class="row2">
+          <div class="field"><label>วันเกิด</label><input type="date" id="id_dob"></div>
+          <div class="field"><label>วันหมดอายุ</label><input type="date" id="id_exp"></div>
+        </div>
+        <div class="field"><label>ที่อยู่</label><textarea id="id_addr" rows="2" placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด"></textarea></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page2">
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128100;</div><div><div class="ch-title">ข้อมูลผู้ขาย</div><div class="ch-sub">ตามบัตรประชาชน</div></div></div>
+    <div class="card-body">
+      <div class="field"><label>ชื่อ-นามสกุล <span class="req">*</span></label><input type="text" id="c_name" placeholder="นายสมชาย ใจดี"></div>
+      <div class="field"><label>เลขบัตรประชาชน <span class="req">*</span></label><input type="text" id="c_id" placeholder="X-XXXX-XXXXX-XX-X" maxlength="17" inputmode="numeric"></div>
+      <div class="row2">
+        <div class="field"><label>วันเกิด</label><input type="date" id="c_dob"></div>
+        <div class="field"><label>เบอร์โทร</label><input type="tel" id="c_phone" placeholder="08X-XXX-XXXX"></div>
+      </div>
+      <div class="field"><label>ที่อยู่ตามบัตร</label><textarea id="c_addr" rows="2" placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์"></textarea></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page3">
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128241;</div><div><div class="ch-title">ข้อมูลอุปกรณ์</div><div class="ch-sub">กรอกให้ตรงกับเครื่องจริง</div></div></div>
+    <div class="card-body">
+      <div class="row2">
+        <div class="field"><label>ยี่ห้อ <span class="req">*</span></label>
+          <select id="d_brand"><option value="">เลือกยี่ห้อ</option><option>Apple</option><option>Samsung</option><option>Xiaomi</option><option>OPPO</option><option>Vivo</option><option>Realme</option><option>OnePlus</option><option>Huawei</option><option>Google</option><option>อื่นๆ</option></select>
+        </div>
+        <div class="field"><label>รุ่น <span class="req">*</span></label><input type="text" id="d_model" placeholder="iPhone 15 Pro Max"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>ความจุ</label>
+          <select id="d_storage"><option>64 GB</option><option>128 GB</option><option selected>256 GB</option><option>512 GB</option><option>1 TB</option><option>อื่นๆ</option></select>
+        </div>
+        <div class="field"><label>สี</label><input type="text" id="d_color" placeholder="Natural Titanium"></div>
+      </div>
+      <div class="field"><label>Serial Number <span class="req">*</span></label><input type="text" id="d_serial" placeholder="XXXXXXXXXX" style="font-family:'IBM Plex Mono',monospace"></div>
+      <div class="field"><label>IMEI</label><input type="text" id="d_imei" placeholder="XXXXXXXXXXXXXXX" inputmode="numeric" style="font-family:'IBM Plex Mono',monospace" maxlength="15"></div>
+      <div class="field"><label>แหล่งที่มา <span class="req">*</span></label>
+        <div class="cond-group" id="originPills">
+          <button class="cond-pill cp-green" type="button" data-v="ศูนย์ไทย (TH)">ศูนย์ไทย</button>
+          <button class="cond-pill" type="button" data-v="ศูนย์นอก">ศูนย์นอก</button>
+          <button class="cond-pill" type="button" data-v="นำเข้าส่วนตัว">นำเข้าส่วนตัว</button>
+          <button class="cond-pill" type="button" data-v="อื่นๆ" id="originOtherBtn">อื่นๆ</button>
+        </div>
+      </div>
+      <div id="originOther" class="field" style="display:none"><label>ระบุแหล่งที่มา</label><input type="text" id="d_origin_other" placeholder="เช่น ญี่ปุ่น, ฮ่องกง"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128269;</div><div><div class="ch-title">การประเมินสภาพ</div><div class="ch-sub">ตรวจสอบและบันทึกสภาพจริง</div></div></div>
+    <div class="card-body">
+      <div class="field"><label>สภาพหน้าจอ <span class="req">*</span></label>
+        <div class="cond-group" id="screenPills">
+          <button class="cond-pill cp-green" type="button" data-v="ไม่มีรอย">ไม่มีรอย</button>
+          <button class="cond-pill" type="button" data-v="รอยเล็กน้อย">รอยเล็กน้อย</button>
+          <button class="cond-pill" type="button" data-v="รอยชัดเจน">รอยชัดเจน</button>
+          <button class="cond-pill" type="button" data-v="แตก / เสีย">แตก / เสีย</button>
+        </div>
+      </div>
+      <div class="field"><label>สภาพบอดี้ <span class="req">*</span></label>
+        <div class="cond-group" id="bodyPills">
+          <button class="cond-pill cp-green" type="button" data-v="ไม่มีรอย">ไม่มีรอย</button>
+          <button class="cond-pill" type="button" data-v="รอยขีดเล็กน้อย">รอยขีดเล็กน้อย</button>
+          <button class="cond-pill" type="button" data-v="รอยชัดเจน / บุบ">รอยชัดเจน / บุบ</button>
+          <button class="cond-pill" type="button" data-v="บุบหนัก / งอ">บุบหนัก / งอ</button>
+        </div>
+      </div>
+      <div class="field"><label>ฟังก์ชันการใช้งาน <span class="req">*</span></label>
+        <div class="cond-group" id="funcPills">
+          <button class="cond-pill cp-green" type="button" data-v="ปกติทุกฟังก์ชัน">ปกติทุกฟังก์ชัน</button>
+          <button class="cond-pill" type="button" data-v="มีปัญหาบางส่วน">มีปัญหาบางส่วน</button>
+          <button class="cond-pill" type="button" data-v="ใช้งานไม่ได้">ใช้งานไม่ได้</button>
+        </div>
+      </div>
+      <div id="funcProbWrap" class="field" style="display:none"><label>ระบุปัญหา</label><textarea id="d_funcprob" rows="2" placeholder="เช่น กล้องหน้าไม่ทำงาน, Face ID เสีย"></textarea></div>
+      <div class="row2">
+        <div class="field"><label>สุขภาพแบตเตอรี่</label>
+          <select id="d_batt">
+            <option value="ไม่ทราบ">ไม่ทราบ</option>
+            <option value="100%">100%</option><option value="99%">99%</option><option value="98%">98%</option><option value="97%">97%</option><option value="96%">96%</option><option value="95%">95%</option><option value="94%">94%</option><option value="93%">93%</option><option value="92%">92%</option><option value="91%">91%</option>
+            <option value="90%">90%</option><option value="89%">89%</option><option value="88%">88%</option><option value="87%">87%</option><option value="86%">86%</option><option value="85%" selected>85%</option><option value="84%">84%</option><option value="83%">83%</option><option value="82%">82%</option><option value="81%">81%</option>
+            <option value="80%">80%</option><option value="79%">79%</option><option value="78%">78%</option><option value="77%">77%</option><option value="76%">76%</option><option value="75%">75%</option><option value="70%">70%</option><option value="65%">65%</option><option value="60%">60%</option><option value="ต่ำกว่า 60%">ต่ำกว่า 60%</option>
+          </select>
+        </div>
+        <div class="field"><label>Apple ID / iCloud</label>
+          <select id="d_icloud">
+            <option value="ปลดแล้ว">ปลดแล้ว -- ไม่ติดล็อค</option>
+            <option value="ยังไม่ได้ปลด">ยังไม่ได้ปลด</option>
+            <option value="ติด iCloud Lock">ติด iCloud Lock</option>
+            <option value="N/A">N/A -- ไม่ใช่ Apple</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>สถานะประกัน</label>
+        <select id="d_warranty">
+          <option>ไม่มีประกัน / หมดแล้ว</option>
+          <option>ประกันศูนย์ยังเหลืออยู่</option>
+          <option>Apple Care+</option>
+          <option>ประกันร้าน</option>
+          <option>ไม่ทราบ</option>
+        </select>
+      </div>
+      <div id="warrantyDateWrap" class="field" style="display:none">
+        <label>ประกันหมดอายุวันที่</label>
+        <input type="date" id="d_warranty_date">
+        <div id="warrantyLeft" style="font-size:12px;margin-top:4px;font-weight:500"></div>
+      </div>
+      <div style="padding:6px 0;border-top:1px solid var(--border2);margin-top:6px">
+        <div class="toggle-row">
+          <div><div style="font-size:13px;font-weight:500">ผ่านการซ่อมมาก่อน</div><div style="font-size:11px;color:var(--text3)">รวมเปลี่ยนชิ้นส่วนทุกประเภท</div></div>
+          <label class="toggle"><input type="checkbox" id="repairTgl"><span class="tslider"></span></label>
+        </div>
+      </div>
+      <div id="repairWrap" class="field" style="display:none"><label>รายละเอียดการซ่อม</label><textarea id="d_repair" rows="2" placeholder="เช่น เปลี่ยนหน้าจอ Apple Store"></textarea></div>
+      <div class="field" style="margin-top:8px"><label>เกรดสภาพโดยรวม <span class="req">*</span></label>
+        <div class="grade-grid">
+          <button class="grade-btn sel" type="button" data-grade="A"><span class="grade-letter">A</span><span class="grade-lbl">สภาพใหม่</span></button>
+          <button class="grade-btn" type="button" data-grade="B"><span class="grade-letter">B</span><span class="grade-lbl">สภาพดี</span></button>
+          <button class="grade-btn" type="button" data-grade="C"><span class="grade-letter">C</span><span class="grade-lbl">พอใช้</span></button>
+          <button class="grade-btn" type="button" data-grade="D"><span class="grade-letter">D</span><span class="grade-lbl">เสีย/ซ่อม</span></button>
+        </div>
+      </div>
+      <div class="field"><label>หมายเหตุ</label><textarea id="d_note" rows="2" placeholder="รายละเอียดอื่นๆ"></textarea></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128230;</div><div><div class="ch-title">อุปกรณ์ที่รับมาด้วย</div></div></div>
+    <div class="card-body">
+      <div style="display:flex;flex-wrap:wrap;gap:7px">
+        <label class="acc-lbl"><input type="checkbox" id="acc_box"> กล่อง</label>
+        <label class="acc-lbl"><input type="checkbox" id="acc_cable"> สายชาร์จ</label>
+        <label class="acc-lbl"><input type="checkbox" id="acc_adapter"> หัวชาร์จ</label>
+        <label class="acc-lbl"><input type="checkbox" id="acc_case"> เคส</label>
+        <label class="acc-lbl"><input type="checkbox" id="acc_ear"> หูฟัง</label>
+        <label class="acc-lbl"><input type="checkbox" id="acc_film"> ฟิล์มกันรอย</label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page4">
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128176;</div><div><div class="ch-title">ราคารับซื้อ</div></div></div>
+    <div class="card-body">
+      <div class="field"><label>ราคารับซื้อ (บาท) <span class="req">*</span></label><input type="number" id="p_amount" placeholder="0" inputmode="numeric" style="font-size:22px;font-weight:700;text-align:center;padding:12px;font-family:'IBM Plex Mono',monospace"></div>
+      <div class="price-box"><div style="font-size:11px;opacity:.7;margin-bottom:3px;color:#fff">ยอดที่ชำระให้ผู้ขาย</div><div><span class="price-box-amt" id="priceAmt">0</span><span style="font-size:13px;color:rgba(255,255,255,.75);margin-left:5px">บาท</span></div></div>
+      <div class="row2">
+        <div class="field"><label>วันที่ทำรายการ <span class="req">*</span></label><input type="date" id="p_date"></div>
+        <div class="field"><label>พนักงานผู้รับซื้อ <span class="req">*</span></label><input type="text" id="p_staff" placeholder="ชื่อพนักงาน"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128179;</div><div><div class="ch-title">วิธีการชำระเงิน</div></div></div>
+    <div class="card-body">
+      <div class="pay-tabs">
+        <button class="pay-tab active" type="button" id="pt-cash">เงินสด</button>
+        <button class="pay-tab" type="button" id="pt-transfer">โอนธนาคาร</button>
+      </div>
+      <div id="cashWrap"><div class="info-box">ชำระด้วยเงินสด -- บันทึกในเอกสารว่าชำระครบถ้วนแล้ว</div></div>
+      <div id="transferWrap" style="display:none">
+        <div class="field"><label>ชื่อบัญชีผู้รับเงิน <span class="req">*</span></label><input type="text" id="b_name" placeholder="ชื่อ-นามสกุล"></div>
+        <div class="row2">
+          <div class="field"><label>ธนาคาร <span class="req">*</span></label>
+            <select id="b_bank">
+              <option value="">เลือกธนาคาร</option>
+              <option>กสิกรไทย (KBANK)</option><option>ไทยพาณิชย์ (SCB)</option><option>กรุงไทย (KTB)</option><option>กรุงเทพ (BBL)</option><option>กรุงศรีอยุธยา (BAY)</option><option>ทหารไทยธนชาต (TTB)</option><option>ออมสิน (GSB)</option><option>ธกส.</option><option>ทรูมันนี่วอลเล็ต</option><option>พร้อมเพย์ (PromptPay)</option>
+            </select>
+          </div>
+          <div class="field"><label>เลขบัญชี <span class="req">*</span></label><input type="text" id="b_acctno" placeholder="XXX-X-XXXXX-X" inputmode="numeric" style="font-family:'IBM Plex Mono',monospace"></div>
+        </div>
+        <div class="field"><label>แนบสลิปโอนเงิน</label>
+          <div class="slip-zone" id="slipZone">
+            <input type="file" id="slipFile" accept="image/*">
+            <div id="slipPh"><div style="font-size:20px;margin-bottom:4px">&#129534;</div><div style="font-size:12px;font-weight:600">แตะเพื่อแนบสลิป</div></div>
+            <img id="slipImg" class="slip-preview-img" alt="">
+          </div>
+          <div id="slipOk" style="display:none;font-size:12px;color:var(--green);margin-top:5px;font-weight:600">แนบสลิปแล้ว</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page5">
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#9998;</div><div><div class="ch-title">ลายมือชื่อผู้ขาย</div><div class="ch-sub">ให้ผู้ขายเซ็นชื่อด้วยตนเอง</div></div></div>
+    <div class="card-body">
+      <canvas id="sigBuyer" class="sig-canvas" width="660" height="120"></canvas>
+      <p style="font-size:11px;color:var(--text3);text-align:center;padding:4px 0">เซ็นชื่อด้วยนิ้วหรือ Apple Pencil</p>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-secondary btn-sm" type="button" id="btnClearBuyer">ล้าง</button>
+        <button class="btn btn-primary btn-sm" type="button" id="btnConfirmBuyer">ยืนยัน</button>
+      </div>
+      <div id="sigBuyOk" style="display:none;color:var(--green);font-size:12px;font-weight:600;padding:5px 0">บันทึกลายเซ็นผู้ขายแล้ว</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#9998;</div><div><div class="ch-title">ลายมือชื่อผู้ซื้อ / พนักงาน</div><div class="ch-sub">พนักงานที่ดำเนินการเซ็นกำกับ</div></div></div>
+    <div class="card-body">
+      <canvas id="sigSeller" class="sig-canvas" width="660" height="120"></canvas>
+      <p style="font-size:11px;color:var(--text3);text-align:center;padding:4px 0">เซ็นชื่อด้วยนิ้วหรือ Apple Pencil</p>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-secondary btn-sm" type="button" id="btnClearSeller">ล้าง</button>
+        <button class="btn btn-primary btn-sm" type="button" id="btnConfirmSeller">ยืนยัน</button>
+      </div>
+      <div id="sigSelOk" style="display:none;color:var(--green);font-size:12px;font-weight:600;padding:5px 0">บันทึกลายเซ็นพนักงานแล้ว</div>
+    </div>
+  </div>
+  <div id="genBtnWrap" style="padding:0 0 10px">
+    <button class="btn btn-primary" type="button" id="btnGenDoc" style="padding:14px;font-size:15px">ออกเอกสารสัญญา</button>
+  </div>
+  <div id="docWrap" style="display:none">
+    <div id="pdfDoc" class="pdf-wrap"></div>
+    <div id="receiptDoc" class="pdf-wrap"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:80px">
+      <button class="btn btn-primary" type="button" id="btnDlContract">ดาวน์โหลดสัญญาซื้อขาย</button>
+      <button class="btn btn-gold" type="button" id="btnDlReceipt">ดาวน์โหลดใบสำคัญรับเงิน</button>
+      <button class="btn btn-secondary" type="button" id="btnNewRecord">ทำรายการใหม่</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="dashTab" style="display:none;padding:14px">
+  <div class="stat-grid">
+    <div class="stat-card"><div style="font-size:18px;margin-bottom:5px">&#128203;</div><div class="stat-val" id="s-total">0</div><div class="stat-lbl">รายการทั้งหมด</div></div>
+    <div class="stat-card"><div style="font-size:18px;margin-bottom:5px">&#128197;</div><div class="stat-val" id="s-today">0</div><div class="stat-lbl">รายการวันนี้</div></div>
+    <div class="stat-card"><div style="font-size:18px;margin-bottom:5px">&#128181;</div><div class="stat-val" id="s-sum">&#3647;0</div><div class="stat-lbl">ยอดจ่ายรวม</div></div>
+    <div class="stat-card"><div style="font-size:18px;margin-bottom:5px">&#128202;</div><div class="stat-val" id="s-avg">&#3647;0</div><div class="stat-lbl">เฉลี่ยต่อรายการ</div></div>
+  </div>
+  <button class="btn btn-export" type="button" id="btnExportDash" style="margin-bottom:12px">ส่งออกข้อมูล CSV</button>
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128336;</div><div><div class="ch-title">รายการล่าสุด</div></div></div>
+    <div class="card-body" id="recentList"><div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">ยังไม่มีรายการ</div></div>
+  </div>
+</div>
+
+<div id="historyTab" style="display:none;padding:14px">
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <input type="text" id="searchQ" placeholder="ค้นหาชื่อ รุ่น Serial เลขเอกสาร..." style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 13px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
+    <button class="btn btn-export btn-sm" type="button" id="btnExportHist" style="width:auto;white-space:nowrap">Export CSV</button>
+  </div>
+  <div id="histList"></div>
+</div>
+
+<div id="settingsTab" style="display:none;padding:14px">
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128272;</div><div><div class="ch-title">ความปลอดภัย</div></div></div>
+    <div class="card-body">
+      <div class="setting-row">
+        <div><div class="setting-label">เปลี่ยน PIN เจ้าของ</div><div class="setting-sub">PIN เริ่มต้น: 1234</div></div>
+        <button class="btn btn-outline btn-sm" type="button" id="btnChangePin" style="width:auto">เปลี่ยน PIN</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128190;</div><div><div class="ch-title">ข้อมูล</div></div></div>
+    <div class="card-body">
+      <div class="setting-row">
+        <div><div class="setting-label">สำรองข้อมูล CSV</div><div class="setting-sub">เปิดใน Excel ได้ทันที</div></div>
+        <button class="btn btn-export btn-sm" type="button" id="btnExportSet" style="width:auto">Export</button>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">จำนวนรายการ</div><div class="setting-sub" id="recordCount">0 รายการ</div></div>
+      </div>
+      <div class="setting-row" style="border:none">
+        <div><div class="setting-label" style="color:var(--red)">ล้างข้อมูลทั้งหมด</div><div class="setting-sub">ไม่สามารถกู้คืนได้</div></div>
+        <button class="btn btn-sm" type="button" id="btnClearData" style="width:auto;background:#fef2f2;color:var(--red);border:1px solid #fca5a5">ล้าง</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="ch-icon">&#8505;</div><div><div class="ch-title">เกี่ยวกับระบบ</div></div></div>
+    <div class="card-body">
+      <div class="setting-row"><div class="setting-label">เวอร์ชัน</div><span style="font-family:'IBM Plex Mono',monospace;font-size:13px">v5.1 Final</span></div>
+      <div class="setting-row"><div class="setting-label">กฎหมายที่อ้างอิง</div><span style="font-size:12px;color:var(--text3);text-align:right">ป.พ.พ. 453, PDPA 2562</span></div>
+      <div class="setting-row" style="border:none"><div class="setting-label">ติดตั้งบน iPhone</div><span style="font-size:12px;color:var(--text3)">Share &#8594; Add to Home Screen</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar" id="bottomBar">
+  <button class="btn btn-outline btn-sm" type="button" id="btnBack" style="display:none;max-width:110px">&#8592; ย้อนกลับ</button>
+  <button class="btn btn-primary" type="button" id="btnNext">ถัดไป &#8594;</button>
+</div>
+</div>
+<script>
+(function() {
+  // ===== STATE =====
+  var currentRole = '';
+  var step = 1;
+  var grade = 'A';
+  var payM = 'cash';
+  var sc_origin = 'ศูนย์ไทย (TH)';
+  var sc_screen = 'ไม่มีรอย';
+  var sc_body = 'ไม่มีรอย';
+  var sc_func = 'ปกติทุกฟังก์ชัน';
+  var sigBuyOK = false, sigSelOK = false;
+  var sigHasBuy = false, sigHasSel = false;
+  var slipData = '';
+  var idPhotoData = '';
+  var docCounter = 1;
+  var records = [];
+  var ownerPin = localStorage.getItem('mbp_pin') || '1234';
+  var pinInput = '';
+  var canvBuyer = null, ctxBuyer = null;
+  var canvSeller = null, ctxSeller = null;
+  var drawingBuyer = false, drawingSeller = false;
+  var lxB = 0, lyB = 0, lxS = 0, lyS = 0;
+
+  try { var s = localStorage.getItem('mbp_v5'); if (s) records = JSON.parse(s); } catch(e) {}
+
+  // ===== HELPERS =====
+  function el(id) { return document.getElementById(id); }
+  function val(id) { var e = el(id); return e ? e.value.trim() : ''; }
+
+  function toast(msg, type) {
+    var t = el('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (type ? ' ' + type : '');
+    setTimeout(function() { t.className = 'toast'; }, 3000);
+  }
+
+  function showLoading(txt) {
+    el('overlayTxt').textContent = txt || 'กำลังดำเนินการ...';
+    el('overlay').classList.add('show');
+  }
+
+  function hideLoading() { el('overlay').classList.remove('show'); }
+
+  // ===== PIN =====
+  function updateDots() {
+    for (var i = 0; i < 4; i++) {
+      el('pd' + i).className = 'pin-dot' + (i < pinInput.length ? ' filled' : '');
+    }
+  }
+
+  function pinKey(k) {
+    if (pinInput.length >= 4) return;
+    pinInput += k;
+    updateDots();
+  }
+
+  function pinDel() { pinInput = pinInput.slice(0, -1); updateDots(); }
+
+  function pinEnter() {
+    if (pinInput === ownerPin) {
+      enterApp('owner');
+    } else {
+      el('pinError').textContent = 'PIN ไม่ถูกต้อง กรุณาลองใหม่';
+      pinInput = '';
+      updateDots();
+      setTimeout(function() { el('pinError').textContent = ''; }, 2000);
+    }
+  }
+
+  function backToRoles() {
+    pinInput = '';
+    updateDots();
+    el('pinWrap').style.display = 'none';
+    el('roleStaff').classList.remove('selected');
+    el('roleOwner').classList.remove('selected');
+  }
+
+  function selectRole(role) {
+    el('roleStaff').classList.toggle('selected', role === 'staff');
+    el('roleOwner').classList.toggle('selected', role === 'owner');
+    if (role === 'staff') {
+      enterApp('staff');
+    } else {
+      el('pinWrap').style.display = 'block';
+      el('pinError').textContent = '';
+      pinInput = '';
+      updateDots();
+    }
+  }
+
+  function enterApp(role) {
+    currentRole = role;
+    el('loginScreen').style.display = 'none';
+    el('mainApp').style.display = 'block';
+    var isOwner = role === 'owner';
+    var badge = el('roleBadge');
+    badge.textContent = isOwner ? 'Owner' : 'Staff';
+    badge.className = 'role-badge' + (isOwner ? ' owner' : '');
+    ['dash', 'history', 'settings'].forEach(function(id) {
+      el('nt-' + id).className = 'nav-tab' + (isOwner ? '' : ' hidden');
+    });
+    if (isOwner) el('recordCount').textContent = records.length + ' รายการ';
+    el('p_date').value = new Date().toISOString().split('T')[0];
+    initCanvases();
+  }
+
+  function logout() {
+    if (!confirm('ออกจากระบบ?')) return;
+    currentRole = '';
+    el('mainApp').style.display = 'none';
+    el('loginScreen').style.display = 'flex';
+    backToRoles();
+    el('docBadge').textContent = '--';
+  }
+
+  // ===== CANVASES =====
+  function initCanvas(cvEl, ctx, hasFn, lxRef, lyRef, drawFn) {
+    ctx.strokeStyle = '#1a1a2e';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.fillStyle = '#f2f1ee';
+    ctx.fillRect(0, 0, cvEl.width, cvEl.height);
+  }
+
+  function getPos(e, cvEl) {
+    var r = cvEl.getBoundingClientRect();
+    var sx = cvEl.width / r.width;
+    var sy = cvEl.height / r.height;
+    if (e.touches) {
+      return { x: (e.touches[0].clientX - r.left) * sx, y: (e.touches[0].clientY - r.top) * sy };
+    }
+    return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy };
+  }
+
+  function initCanvases() {
+    canvBuyer = el('sigBuyer');
+    ctxBuyer = canvBuyer.getContext('2d');
+    ctxBuyer.strokeStyle = '#1a1a2e'; ctxBuyer.lineWidth = 2; ctxBuyer.lineCap = 'round'; ctxBuyer.lineJoin = 'round';
+    ctxBuyer.fillStyle = '#f2f1ee'; ctxBuyer.fillRect(0, 0, canvBuyer.width, canvBuyer.height);
+
+    canvSeller = el('sigSeller');
+    ctxSeller = canvSeller.getContext('2d');
+    ctxSeller.strokeStyle = '#1a1a2e'; ctxSeller.lineWidth = 2; ctxSeller.lineCap = 'round'; ctxSeller.lineJoin = 'round';
+    ctxSeller.fillStyle = '#f2f1ee'; ctxSeller.fillRect(0, 0, canvSeller.width, canvSeller.height);
+
+    // Buyer canvas events
+    canvBuyer.addEventListener('mousedown', function(e) { drawingBuyer = true; var p = getPos(e, canvBuyer); lxB = p.x; lyB = p.y; });
+    canvBuyer.addEventListener('mousemove', function(e) {
+      if (!drawingBuyer) return;
+      var p = getPos(e, canvBuyer);
+      ctxBuyer.beginPath(); ctxBuyer.moveTo(lxB, lyB); ctxBuyer.lineTo(p.x, p.y); ctxBuyer.stroke();
+      lxB = p.x; lyB = p.y; sigHasBuy = true; sigBuyOK = false; el('sigBuyOk').style.display = 'none';
+    });
+    canvBuyer.addEventListener('mouseup', function() { drawingBuyer = false; });
+    canvBuyer.addEventListener('mouseleave', function() { drawingBuyer = false; });
+    canvBuyer.addEventListener('touchstart', function(e) { e.preventDefault(); drawingBuyer = true; var p = getPos(e, canvBuyer); lxB = p.x; lyB = p.y; }, { passive: false });
+    canvBuyer.addEventListener('touchmove', function(e) {
+      e.preventDefault(); if (!drawingBuyer) return;
+      var p = getPos(e, canvBuyer);
+      ctxBuyer.beginPath(); ctxBuyer.moveTo(lxB, lyB); ctxBuyer.lineTo(p.x, p.y); ctxBuyer.stroke();
+      lxB = p.x; lyB = p.y; sigHasBuy = true; sigBuyOK = false; el('sigBuyOk').style.display = 'none';
+    }, { passive: false });
+    canvBuyer.addEventListener('touchend', function() { drawingBuyer = false; });
+
+    // Seller canvas events
+    canvSeller.addEventListener('mousedown', function(e) { drawingSeller = true; var p = getPos(e, canvSeller); lxS = p.x; lyS = p.y; });
+    canvSeller.addEventListener('mousemove', function(e) {
+      if (!drawingSeller) return;
+      var p = getPos(e, canvSeller);
+      ctxSeller.beginPath(); ctxSeller.moveTo(lxS, lyS); ctxSeller.lineTo(p.x, p.y); ctxSeller.stroke();
+      lxS = p.x; lyS = p.y; sigHasSel = true; sigSelOK = false; el('sigSelOk').style.display = 'none';
+    });
+    canvSeller.addEventListener('mouseup', function() { drawingSeller = false; });
+    canvSeller.addEventListener('mouseleave', function() { drawingSeller = false; });
+    canvSeller.addEventListener('touchstart', function(e) { e.preventDefault(); drawingSeller = true; var p = getPos(e, canvSeller); lxS = p.x; lyS = p.y; }, { passive: false });
+    canvSeller.addEventListener('touchmove', function(e) {
+      e.preventDefault(); if (!drawingSeller) return;
+      var p = getPos(e, canvSeller);
+      ctxSeller.beginPath(); ctxSeller.moveTo(lxS, lyS); ctxSeller.lineTo(p.x, p.y); ctxSeller.stroke();
+      lxS = p.x; lyS = p.y; sigHasSel = true; sigSelOK = false; el('sigSelOk').style.display = 'none';
+    }, { passive: false });
+    canvSeller.addEventListener('touchend', function() { drawingSeller = false; });
+  }
+
+  function clearCanvas(which) {
+    if (which === 'buy' && ctxBuyer) {
+      ctxBuyer.fillStyle = '#f2f1ee'; ctxBuyer.fillRect(0, 0, canvBuyer.width, canvBuyer.height);
+      sigHasBuy = false; sigBuyOK = false; el('sigBuyOk').style.display = 'none';
+    } else if (ctxSeller) {
+      ctxSeller.fillStyle = '#f2f1ee'; ctxSeller.fillRect(0, 0, canvSeller.width, canvSeller.height);
+      sigHasSel = false; sigSelOK = false; el('sigSelOk').style.display = 'none';
+    }
+  }
+
+  function confirmSig(which) {
+    if (which === 'buy') {
+      if (!sigHasBuy) { toast('กรุณาเซ็นชื่อก่อน', 'err'); return; }
+      sigBuyOK = true; el('sigBuyOk').style.display = 'block'; toast('บันทึกลายเซ็นผู้ขายแล้ว', 'ok');
+    } else {
+      if (!sigHasSel) { toast('กรุณาเซ็นชื่อก่อน', 'err'); return; }
+      sigSelOK = true; el('sigSelOk').style.display = 'block'; toast('บันทึกลายเซ็นพนักงานแล้ว', 'ok');
+    }
+  }
+
+  // ===== TABS =====
+  function switchTab(t) {
+    ['form', 'dash', 'history', 'settings'].forEach(function(id) {
+      var tab = el(id + 'Tab');
+      if (tab) tab.style.display = t === id ? 'block' : 'none';
+      var btn = el('nt-' + id);
+      if (!btn) return;
+      if (currentRole !== 'owner' && id !== 'form') { btn.className = 'nav-tab hidden'; return; }
+      btn.className = 'nav-tab' + (t === id ? ' active' : '');
+    });
+    el('bottomBar').style.display = t === 'form' ? 'flex' : 'none';
+    if (t === 'dash') renderDash();
+    if (t === 'history') renderHistory();
+    if (t === 'settings') el('recordCount').textContent = records.length + ' รายการ';
+  }
+
+  // ===== STEPS =====
+  function gotoStep(n) {
+    el('page' + step).classList.remove('active');
+    for (var i = 1; i <= 5; i++) {
+      el('sn' + i).className = 'step-item ' + (i < n ? 'done' : i === n ? 'active' : 'inactive');
+    }
+    step = n;
+    el('page' + n).classList.add('active');
+    el('btnBack').style.display = n > 1 ? 'flex' : 'none';
+    if (n === 5) {
+      el('btnNext').style.display = 'none';
+      el('bottomBar').style.display = 'none';
+    } else {
+      el('btnNext').style.display = 'flex';
+      el('bottomBar').style.display = 'flex';
+    }
+    window.scrollTo(0, 0);
+  }
+
+  function validate(s) {
+    if (s === 2) {
+      if (!val('c_name')) { toast('กรุณากรอกชื่อผู้ขาย', 'err'); return false; }
+      if (!val('c_id')) { toast('กรุณากรอกเลขบัตร ปชช.', 'err'); return false; }
+    }
+    if (s === 3) {
+      if (!val('d_model')) { toast('กรุณากรอกรุ่นสินค้า', 'err'); return false; }
+      if (!val('d_serial')) { toast('กรุณากรอก Serial Number', 'err'); return false; }
+    }
+    if (s === 4) {
+      if (!val('p_amount')) { toast('กรุณากรอกราคา', 'err'); return false; }
+      if (!val('p_staff')) { toast('กรุณากรอกชื่อพนักงาน', 'err'); return false; }
+      if (payM === 'transfer') {
+        if (!val('b_name')) { toast('กรุณากรอกชื่อบัญชี', 'err'); return false; }
+        if (!val('b_acctno')) { toast('กรุณากรอกเลขบัญชี', 'err'); return false; }
+      }
+    }
+    return true;
+  }
+
+  // ===== PILL SELECTORS =====
+  function setupPillGroup(groupId, varSetter, colorMap) {
+    var pills = document.querySelectorAll('#' + groupId + ' .cond-pill');
+    pills.forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        pills.forEach(function(p) { p.className = 'cond-pill'; });
+        var v = pill.dataset.v;
+        var color = colorMap ? colorMap(v) : 'cp-green';
+        pill.className = 'cond-pill ' + color;
+        varSetter(v);
+        if (groupId === 'originPills' && v === 'อื่นๆ') {
+          el('originOther').style.display = 'block';
+        }
+      });
+    });
+  }
+
+  // ===== PAYMENT =====
+  function setPayment(m) {
+    payM = m;
+    el('pt-cash').className = 'pay-tab' + (m === 'cash' ? ' active' : '');
+    el('pt-transfer').className = 'pay-tab' + (m === 'transfer' ? ' active' : '');
+    el('cashWrap').style.display = m === 'cash' ? 'block' : 'none';
+    el('transferWrap').style.display = m === 'transfer' ? 'block' : 'none';
+  }
+
+  // ===== WARRANTY =====
+  function calcWarranty() {
+    var d = new Date(el('d_warranty_date').value);
+    var diff = Math.ceil((d - new Date()) / 86400000);
+    var wl = el('warrantyLeft');
+    if (diff > 0) {
+      var m = Math.floor(diff / 30);
+      wl.textContent = 'ประกันเหลือ ' + diff + ' วัน (' + (m > 0 ? m + ' เดือน' : 'น้อยกว่า 1 เดือน') + ')';
+      wl.style.color = 'var(--green)';
+    } else {
+      wl.textContent = 'ประกันสิ้นสุดแล้ว';
+      wl.style.color = 'var(--red)';
+    }
+  }
+
+  // ===== FILE HANDLERS =====
+  function handleIDFile(file) {
+    if (!file) return;
+    var r = new FileReader();
+    r.onload = function(e) {
+      idPhotoData = e.target.result;
+      el('previewId').src = e.target.result;
+      el('previewId').style.display = 'block';
+      el('idFormWrap').style.display = 'block';
+      toast('อัปโหลดสำเร็จ กรุณาตรวจสอบข้อมูล', 'ok');
+    };
+    r.readAsDataURL(file);
+  }
+
+  function handleSlipFile(file) {
+    if (!file) return;
+    var r = new FileReader();
+    r.onload = function(e) {
+      slipData = e.target.result;
+      el('slipImg').src = e.target.result;
+      el('slipImg').style.display = 'block';
+      el('slipPh').style.display = 'none';
+      el('slipOk').style.display = 'block';
+      toast('แนบสลิปแล้ว', 'ok');
+    };
+    r.readAsDataURL(file);
+  }
+
+  // ===== DOCUMENT GENERATION =====
+  function getDocNo() {
+    var now = new Date();
+    var y = now.getFullYear().toString().slice(-2);
+    var m = String(now.getMonth() + 1).padStart(2, '0');
+    var d = String(now.getDate()).padStart(2, '0');
+    return 'MB-' + y + m + d + '-' + String(docCounter++).padStart(4, '0');
+  }
+
+  function generateDoc() {
+    if (!sigBuyOK) { toast('กรุณายืนยันลายเซ็นผู้ขายก่อน', 'err'); return; }
+    if (!sigSelOK) { toast('กรุณายืนยันลายเซ็นพนักงานก่อน', 'err'); return; }
+    showLoading('กำลังออกเอกสาร...');
+    setTimeout(function() { buildDoc(); hideLoading(); el('genBtnWrap').style.display = 'none'; el('docWrap').style.display = 'block'; setTimeout(function() { el('docWrap').scrollIntoView({ behavior: 'smooth' }); }, 100); }, 700);
+  }
+
+  function buildDoc() {
+    var docNo = getDocNo();
+    el('docBadge').textContent = docNo;
+    var now = new Date();
+    var pdate = el('p_date').value;
+    var dateStr = pdate ? new Date(pdate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+    var timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    var cName = val('c_name') || '-';
+    var cId = val('c_id') || '-';
+    var cPhone = val('c_phone') || '-';
+    var cAddr = val('c_addr') || '-';
+    var cDob = el('c_dob').value || '-';
+    var dBrand = el('d_brand').value || '';
+    var dModel = val('d_model') || '-';
+    var dStorage = el('d_storage').value;
+    var dColor = val('d_color') || '-';
+    var dSerial = val('d_serial') || '-';
+    var dImei = val('d_imei') || 'ไม่ระบุ';
+    var dOrigin = sc_origin === 'อื่นๆ' ? (val('d_origin_other') || 'อื่นๆ') : sc_origin;
+    var dBatt = el('d_batt').value;
+    var dIcloud = el('d_icloud').value;
+    var dWarranty = el('d_warranty').value;
+    var dWarrantyDate = el('d_warranty_date').value;
+    var warrantyLeft = el('warrantyLeft').textContent;
+    var warrantyFull = dWarranty + (dWarrantyDate ? ' (หมดอายุ: ' + new Date(dWarrantyDate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) + (warrantyLeft ? ' - ' + warrantyLeft : '') + ')' : '');
+    var repaired = el('repairTgl').checked;
+    var repairDetail = repaired ? (val('d_repair') || 'ไม่ระบุ') : 'ไม่มีประวัติซ่อม';
+    var funcProb = sc_func !== 'ปกติทุกฟังก์ชัน' ? (val('d_funcprob') || 'ไม่ระบุ') : '';
+    var price = parseInt(el('p_amount').value) || 0;
+    var staff = val('p_staff') || '-';
+    var payTh = payM === 'cash' ? 'เงินสด' : 'โอนธนาคาร';
+    var bankInfo = payM === 'transfer' ? val('b_name') + ' | ธ.' + el('b_bank').value + ' | ' + val('b_acctno') : '--';
+    var accs = [];
+    [['acc_box','กล่อง'],['acc_cable','สายชาร์จ'],['acc_adapter','หัวชาร์จ'],['acc_case','เคส'],['acc_ear','หูฟัง'],['acc_film','ฟิล์มกันรอย']].forEach(function(x) {
+      if (el(x[0]) && el(x[0]).checked) accs.push(x[1]);
+    });
+    var accStr = accs.length ? accs.join(', ') : 'ไม่มี';
+    var sigBuyImg = canvBuyer.toDataURL('image/png');
+    var sigSelImg = canvSeller.toDataURL('image/png');
+    var pdpaOk = el('pdpaConsent').checked;
+    var deviceFull = (dBrand + ' ' + dModel + ' ' + dStorage + ' ' + dColor).trim();
+    var dNote = val('d_note') || '--';
+
+    records.unshift({ docNo: docNo, date: dateStr, cName: cName, cId: cId, deviceFull: deviceFull, dSerial: dSerial, grade: grade, price: price, payMethod: payTh, staff: staff, timestamp: Date.now() });
+    try { localStorage.setItem('mbp_v5', JSON.stringify(records.slice(0, 500))); } catch(e) {}
+
+    var idSec = (pdpaOk && idPhotoData) ? '<div style="margin:6px 0"><div style="font-size:9.5px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">สำเนาบัตรประชาชน (ลูกค้ายินยอม PDPA)</div><img src="' + idPhotoData + '" style="max-width:200px;max-height:120px;object-fit:cover;border:1px solid #ddd;border-radius:4px"></div>' : '';
+    var pdpaTxt = pdpaOk ? 'ลูกค้ายินยอมให้จัดเก็บรูปบัตร (PDPA 2562)' : 'ไม่ได้เก็บรูปบัตร -- ใช้ข้อมูลที่กรอกแทน';
+    var slipSec = (payM === 'transfer' && slipData) ? '<div style="margin:6px 0"><div style="font-size:9.5px;color:#999;margin-bottom:3px">หลักฐานโอนเงิน</div><img src="' + slipData + '" style="max-width:140px;max-height:140px;object-fit:contain;border:1px solid #ddd;border-radius:4px"></div>' : '';
+    var gradeCls = { A: 'background:#f0fdf4;color:#15803d;border:1px solid #86efac', B: 'background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd', C: 'background:#fff7ed;color:#c2410c;border:1px solid #fdba74', D: 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5' };
+    var gradeBadge = '<span style="' + gradeCls[grade] + ';display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700">เกรด ' + grade + '</span>';
+    var bankRow = payM === 'transfer' ? '<div style="display:flex;flex-direction:column;margin-bottom:5px"><span style="font-size:9.5px;color:#999;text-transform:uppercase;letter-spacing:.5px">ข้อมูลบัญชีผู้รับเงิน</span><span style="font-size:11px;font-weight:500;border-bottom:1px solid #eee;padding-bottom:2px">' + bankInfo + '</span></div>' : '';
+
+    var css = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sarabun",sans-serif;max-width:720px;margin:0 auto;font-size:12px;color:#222;line-height:1.7}.lh{padding:16px 20px;display:flex;justify-content:space-between;align-items:flex-start}.body{padding:14px 20px}.sec{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:12px 0 7px;padding-bottom:3px;border-bottom:1.5px solid #eee}.grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 15px}.f{display:flex;flex-direction:column;margin-bottom:5px}.fl{font-size:9.5px;color:#999;text-transform:uppercase;letter-spacing:.5px}.fv{font-size:12px;font-weight:500;border-bottom:1px solid #eee;padding-bottom:2px;min-height:18px;margin-top:1px}.terms{background:#fafafa;border:1px solid #eee;border-radius:5px;padding:9px 11px;font-size:11px;color:#444;line-height:1.9;margin:10px 0}.sig2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px;padding-top:10px;border-top:1px solid #eee}.sb{text-align:center}.sa{height:60px;border-bottom:1px solid #bbb;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;margin-bottom:4px}.sl{font-size:10px;color:#555;line-height:1.4}.note{background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:6px 10px;font-size:10px;color:#15803d;margin-top:8px;line-height:1.5}.foot{background:#f5f5f5;border-top:1px solid #eee;padding:7px 20px;font-size:10px;color:#aaa;display:flex;justify-content:space-between}';
+
+    function fRow(label, value) {
+      return '<div class="f"><span class="fl">' + label + '</span><span class="fv">' + value + '</span></div>';
+    }
+
+    var contractHTML = '<div class="lh" style="background:#1a1a2e"><div><div style="font-size:15px;font-weight:700;color:#fff">สัญญาซื้อขายโทรศัพท์มือถือ</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">Mobile Purchase Agreement - Mobile Buyback Pro</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#c9a84c">CONTRACT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + ' ' + timeStr + ' น.</div></div></div>';
+    contractHTML += '<div class="body">';
+    contractHTML += '<div class="sec">§1 ข้อมูลผู้ขาย</div>' + idSec;
+    contractHTML += '<div class="grid">' + fRow('ชื่อ-นามสกุล', cName) + fRow('เลขบัตรประชาชน', cId) + fRow('วันเกิด', cDob) + fRow('เบอร์โทรศัพท์', cPhone) + '<div class="f" style="grid-column:1/-1"><span class="fl">ที่อยู่</span><span class="fv">' + cAddr + '</span></div></div>';
+    contractHTML += '<div style="font-size:10px;color:#888;font-style:italic;margin-top:2px">' + pdpaTxt + '</div>';
+    contractHTML += '<div class="sec">§2 รายละเอียดสินค้า</div>';
+    contractHTML += '<div class="grid">' + fRow('ยี่ห้อ / รุ่น', dBrand + ' ' + dModel) + fRow('แหล่งที่มา', dOrigin) + fRow('ความจุ / สี', dStorage + ' / ' + dColor) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + dSerial + '</span></div>' + '<div class="f"><span class="fl">IMEI</span><span class="fv" style="font-family:monospace">' + dImei + '</span></div>' + fRow('เกรดสภาพ', gradeBadge) + fRow('สภาพหน้าจอ', sc_screen) + fRow('สภาพบอดี้', sc_body) + fRow('ฟังก์ชัน', sc_func + (funcProb ? ' - ' + funcProb : '')) + fRow('แบตเตอรี่', dBatt) + fRow('Apple ID / iCloud', dIcloud) + fRow('สถานะประกัน', warrantyFull) + fRow('ประวัติซ่อม', repairDetail) + fRow('อุปกรณ์ที่รับมาด้วย', accStr) + '<div class="f" style="grid-column:1/-1"><span class="fl">หมายเหตุ</span><span class="fv">' + dNote + '</span></div></div>';
+    contractHTML += '<div class="sec">§3 ราคาและการชำระเงิน</div>';
+    contractHTML += '<div class="grid"><div class="f"><span class="fl">ราคาที่ตกลง</span><span class="fv" style="font-size:15px;font-weight:700">' + price.toLocaleString('th-TH') + ' บาทถ้วน</span></div>' + fRow('วิธีชำระ', payTh) + bankRow + fRow('วันที่ทำรายการ', dateStr) + fRow('พนักงาน', staff) + '</div>' + slipSec;
+    contractHTML += '<div class="sec">§4 ข้อกำหนดและเงื่อนไข</div>';
+    contractHTML += '<div class="terms">1. ผู้ขายรับรองว่าอุปกรณ์เป็นทรัพย์สินของตนโดยชอบด้วยกฎหมาย ไม่ได้มาจากการลักทรัพย์หรือผิดกฎหมายใดๆ (ป.อ. มาตรา 335, 357)<br>2. ผู้ขายยินยอมโอนกรรมสิทธิ์ทั้งสิ้นให้แก่ผู้ซื้อโดยเด็ดขาด (ป.พ.พ. มาตรา 453-459)<br>3. ผู้ขายรับทราบสภาพสินค้าตามที่ระบุ ยินยอมรับราคาโดยไม่มีข้อโต้แย้ง<br>4. ผู้ขายยินยอมให้เก็บข้อมูลตาม PDPA พ.ศ. 2562<br>5. สัญญานี้มีผลสมบูรณ์ตาม ป.พ.พ. มาตรา 453 โดยไม่ต้องมีพยาน</div>';
+    contractHTML += '<div class="sig2"><div class="sb"><div class="sa"><img src="' + sigBuyImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ขาย</strong><br>' + cName + '<br>เลขบัตร: ' + cId + '</div></div><div class="sb"><div class="sa"><img src="' + sigSelImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ซื้อ / พนักงาน</strong><br>' + staff + '</div></div></div>';
+    contractHTML += '<div class="note">สัญญาซื้อขายนี้สมบูรณ์ตาม ป.พ.พ. มาตรา 453 ทำต่อหน้ากัน ณ วันที่ ' + dateStr + ' เวลา ' + timeStr + ' น.</div>';
+    contractHTML += '</div><div class="foot"><span>Mobile Buyback Pro - ' + docNo + '</span><span>เอกสารนี้มีผลผูกพันทางกฎหมาย</span></div>';
+
+    var receiptHTML = '<div class="lh" style="background:#14532d"><div><div style="font-size:15px;font-weight:700;color:#fff">ใบสำคัญรับเงิน</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">Payment Receipt - Mobile Buyback Pro</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#86efac">RECEIPT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '-R</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + '</div></div></div>';
+    receiptHTML += '<div class="body"><div class="sec">ข้อมูลการรับเงิน</div><div class="grid">' + '<div class="f"><span class="fl">ผู้รับเงิน (ผู้ขาย)</span><span class="fv" style="font-size:14px;font-weight:700">' + cName + '</span></div>' + fRow('เลขบัตรประชาชน', cId) + fRow('สินค้าที่ขาย', deviceFull) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + dSerial + '</span></div></div>';
+    receiptHTML += '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:5px;padding:12px;text-align:center;margin:10px 0"><div style="font-size:10px;color:#555;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">จำนวนเงินที่ได้รับ</div><div style="font-size:26px;font-weight:800;color:#15803d;font-family:monospace">' + price.toLocaleString('th-TH') + ' บาทถ้วน</div><div style="font-size:11px;color:#555;margin-top:3px">ชำระโดย: ' + payTh + (payM === 'transfer' ? ' - ' + bankInfo : '') + '</div></div>';
+    receiptHTML += '<div style="font-size:11px;color:#555;line-height:1.9;padding:7px;background:#fafafa;border-radius:4px;margin:7px 0">ข้าพเจ้าขอรับรองว่าได้รับเงินจำนวนดังกล่าวจาก <strong>' + staff + '</strong> เป็นค่าขายโทรศัพท์มือถือตามสัญญาเลขที่ ' + docNo + ' เรียบร้อยแล้ว โดยสมัครใจ ทำ ณ วันที่ ' + dateStr + ' เวลา ' + timeStr + ' น.</div>';
+    receiptHTML += slipSec;
+    receiptHTML += '<div class="sig2"><div class="sb"><div class="sa"><img src="' + sigBuyImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้รับเงิน</strong><br>' + cName + '</div></div><div class="sb"><div class="sa"><img src="' + sigSelImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้จ่ายเงิน</strong><br>' + staff + '</div></div></div>';
+    receiptHTML += '<div class="note">ใบรับเงินสมบูรณ์โดยไม่ต้องมีพยาน - ' + docNo + '-R - ' + dateStr + '</div></div>';
+    receiptHTML += '<div class="foot"><span>Mobile Buyback Pro - ' + docNo + '-R</span><span>' + dateStr + ' ' + timeStr + ' น.</span></div>';
+
+    var fontLink = '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">';
+    el('pdfDoc').innerHTML = fontLink + '<style>' + css + '</style>' + contractHTML;
+    el('receiptDoc').innerHTML = fontLink + '<style>' + css + '</style>' + receiptHTML;
+
+    window._contractHTML = contractHTML;
+    window._receiptHTML = receiptHTML;
+    window._docCSS = css;
+    window._docNo = docNo;
+  }
+
+  function dlDoc(type) {
+    var body = type === 'contract' ? window._contractHTML : window._receiptHTML;
+    var suffix = type === 'receipt' ? '-Receipt' : '';
+    var fontLink = '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">';
+    var full = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' + fontLink + '<style>' + window._docCSS + '</style></head><body>' + body + '</body></html>';
+    var blob = new Blob([full], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = window._docNo + suffix + '.html';
+    a.click();
+    toast('ดาวน์โหลดแล้ว', 'ok');
+  }
+
+  // ===== EXPORT CSV =====
+  function exportCSV() {
+    if (!records.length) { toast('ยังไม่มีข้อมูล', 'err'); return; }
+    var header = ['เลขเอกสาร','วันที่','ชื่อลูกค้า','เลขบัตร ปชช.','สินค้า','Serial','เกรด','ราคา','วิธีชำระ','พนักงาน'];
+    var rows = records.map(function(r) {
+      return [r.docNo,r.date,r.cName,r.cId,r.deviceFull,r.dSerial,r.grade,r.price,r.payMethod,r.staff].map(function(x) {
+        return '"' + String(x || '').replace(/"/g, '""') + '"';
+      }).join(',');
+    });
+    var bom = '﻿';
+    var csv = bom + [header.join(',')].concat(rows).join('\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'MobileBuyback_' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+    toast('Export ' + records.length + ' รายการแล้ว', 'ok');
+  }
+
+  // ===== DASHBOARD & HISTORY =====
+  function renderDash() {
+    var total = records.length;
+    var today = new Date().toDateString();
+    var todayN = records.filter(function(r) { return new Date(r.timestamp).toDateString() === today; }).length;
+    var sum = records.reduce(function(a, r) { return a + (r.price || 0); }, 0);
+    var avg = total ? Math.round(sum / total) : 0;
+    el('s-total').textContent = total;
+    el('s-today').textContent = todayN;
+    el('s-sum').textContent = '฿' + sum.toLocaleString('th-TH');
+    el('s-avg').textContent = '฿' + avg.toLocaleString('th-TH');
+    el('recentList').innerHTML = records.slice(0, 5).map(function(r) {
+      return '<div style="padding:8px 0;border-bottom:1px solid var(--border2)"><div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:600">' + r.cName + '</span><span style="color:var(--green);font-weight:700;font-family:monospace">฿' + (r.price || 0).toLocaleString('th-TH') + '</span></div><div style="font-size:11px;color:var(--text2);margin-top:2px">' + r.deviceFull + ' - ' + r.docNo + '</div></div>';
+    }).join('') || '<div style="text-align:center;color:var(--text3);padding:16px;font-size:13px">ยังไม่มีรายการ</div>';
+  }
+
+  function renderHistory() {
+    var q = (el('searchQ').value || '').toLowerCase();
+    var f = records.filter(function(r) { return [r.cName, r.deviceFull, r.dSerial, r.docNo].join(' ').toLowerCase().indexOf(q) >= 0; });
+    var tagCls = { A: 'background:#f0fdf4;color:#15803d;border-color:#86efac', B: 'background:#eff6ff;color:#1d4ed8;border-color:#93c5fd', C: 'background:#fff7ed;color:#c2410c;border-color:#fdba74', D: 'background:#fef2f2;color:#dc2626;border-color:#fca5a5' };
+    el('histList').innerHTML = f.length ? f.map(function(r) {
+      return '<div class="hist-item"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;font-weight:600">' + r.cName + '</span><span style="color:var(--green);font-weight:700;font-family:monospace">฿' + (r.price || 0).toLocaleString('th-TH') + '</span></div><div style="font-size:12px;color:var(--text2);margin-bottom:3px">' + r.deviceFull + '</div><div style="display:flex;gap:7px;flex-wrap:wrap;font-size:11px;color:var(--text3)"><span style="font-family:monospace">' + r.docNo + '</span><span>' + r.date + '</span><span style="display:inline-flex;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid;' + (tagCls[r.grade] || '') + '">เกรด ' + r.grade + '</span><span>' + r.payMethod + '</span><span>' + (r.staff || '') + '</span></div></div>';
+    }).join('') : '<div style="text-align:center;padding:40px;color:var(--text3)"><div style="font-size:36px;margin-bottom:8px">&#128205;</div><div>ไม่พบรายการ</div></div>';
+  }
+
+  // ===== NEW RECORD =====
+  function newRecord() {
+    if (!confirm('เริ่มรายการใหม่?')) return;
+    document.querySelectorAll('input[type=text],input[type=tel],input[type=number],textarea').forEach(function(e) { e.value = ''; });
+    el('d_brand').value = '';
+    el('d_storage').value = '256 GB';
+    el('d_batt').value = '85%';
+    el('d_icloud').value = 'ปลดแล้ว';
+    el('d_warranty').value = 'ไม่มีประกัน / หมดแล้ว';
+    document.querySelectorAll('input[type=checkbox]').forEach(function(e) { e.checked = false; });
+    el('previewId').style.display = 'none';
+    el('idFormWrap').style.display = 'none';
+    el('slipImg').style.display = 'none';
+    el('slipPh').style.display = 'block';
+    el('slipOk').style.display = 'none';
+    el('repairWrap').style.display = 'none';
+    el('funcProbWrap').style.display = 'none';
+    el('originOther').style.display = 'none';
+    el('warrantyDateWrap').style.display = 'none';
+    el('warrantyLeft').textContent = '';
+    document.querySelectorAll('.cond-pill').forEach(function(p) { p.className = 'cond-pill'; });
+    document.querySelectorAll('#originPills .cond-pill')[0].className = 'cond-pill cp-green';
+    document.querySelectorAll('#screenPills .cond-pill')[0].className = 'cond-pill cp-green';
+    document.querySelectorAll('#bodyPills .cond-pill')[0].className = 'cond-pill cp-green';
+    document.querySelectorAll('#funcPills .cond-pill')[0].className = 'cond-pill cp-green';
+    sc_origin = 'ศูนย์ไทย (TH)'; sc_screen = 'ไม่มีรอย'; sc_body = 'ไม่มีรอย'; sc_func = 'ปกติทุกฟังก์ชัน'; grade = 'A';
+    document.querySelectorAll('.grade-btn').forEach(function(b) { b.className = 'grade-btn'; });
+    document.querySelectorAll('.grade-btn')[0].className = 'grade-btn sel';
+    setPayment('cash'); slipData = ''; idPhotoData = '';
+    sigBuyOK = false; sigHasBuy = false; sigSelOK = false; sigHasSel = false;
+    clearCanvas('buy'); clearCanvas('sel');
+    el('sigBuyOk').style.display = 'none'; el('sigSelOk').style.display = 'none';
+    el('docWrap').style.display = 'none'; el('genBtnWrap').style.display = 'block';
+    el('docBadge').textContent = '--'; el('pdpaConsent').checked = false;
+    el('idSub').textContent = 'ต้องให้ลูกค้ายินยอมก่อน'; el('scanHint').textContent = 'ต้องให้ลูกค้ายินยอมก่อน';
+    el('idFile').disabled = true;
+    el('p_date').value = new Date().toISOString().split('T')[0];
+    gotoStep(1);
+  }
+
+  // ===== SETTINGS =====
+  function changePin() {
+    var newPin = prompt('ใส่ PIN ใหม่ 4 หลัก:');
+    if (!newPin || newPin.length !== 4 || isNaN(newPin)) { toast('PIN ต้องเป็นตัวเลข 4 หลัก', 'err'); return; }
+    var c = prompt('ยืนยัน PIN อีกครั้ง:');
+    if (newPin !== c) { toast('PIN ไม่ตรงกัน', 'err'); return; }
+    ownerPin = newPin;
+    localStorage.setItem('mbp_pin', newPin);
+    toast('เปลี่ยน PIN สำเร็จ', 'ok');
+  }
+
+  function clearAllData() {
+    if (!confirm('ยืนยันล้างข้อมูลทั้งหมด? ไม่สามารถกู้คืนได้')) return;
+    records = [];
+    try { localStorage.removeItem('mbp_v5'); } catch(e) {}
+    toast('ล้างข้อมูลแล้ว', 'ok');
+    el('recordCount').textContent = '0 รายการ';
+  }
+
+  // ===== BIND ALL EVENTS =====
+  document.addEventListener('DOMContentLoaded', function() {
+    // Login
+    el('roleStaff').addEventListener('click', function() { selectRole('staff'); });
+    el('roleOwner').addEventListener('click', function() { selectRole('owner'); });
+    el('pinBack').addEventListener('click', backToRoles);
+    el('btnLogout').addEventListener('click', logout);
+
+    // PIN keys
+    ['1','2','3','4','5','6','7','8','9','0'].forEach(function(k) {
+      el('pk' + k).addEventListener('click', function() { pinKey(k); });
+    });
+    el('pkDel').addEventListener('click', pinDel);
+    el('pkEnter').addEventListener('click', pinEnter);
+
+    // Nav tabs
+    el('nt-form').addEventListener('click', function() { switchTab('form'); });
+    el('nt-dash').addEventListener('click', function() { switchTab('dash'); });
+    el('nt-history').addEventListener('click', function() { switchTab('history'); });
+    el('nt-settings').addEventListener('click', function() { switchTab('settings'); });
+
+    // Steps
+    for (var i = 1; i <= 5; i++) {
+      (function(n) { el('sn' + n).addEventListener('click', function() { gotoStep(n); }); })(i);
+    }
+    el('btnNext').addEventListener('click', function() { if (validate(step)) gotoStep(step + 1); });
+    el('btnBack').addEventListener('click', function() { if (step > 1) gotoStep(step - 1); });
+
+    // Step 1
+    el('pdpaConsent').addEventListener('change', function() {
+      var ok = el('pdpaConsent').checked;
+      el('idFile').disabled = !ok;
+      el('idSub').textContent = ok ? 'ลูกค้ายินยอมแล้ว -- พร้อมถ่ายรูป' : 'ต้องให้ลูกค้ายินยอมก่อน';
+      el('scanHint').textContent = ok ? 'แตะเพื่อเปิดกล้องถ่ายรูปบัตร' : 'ต้องให้ลูกค้ายินยอมก่อน';
+      if (ok) toast('ลูกค้ายินยอมแล้ว', 'ok');
+    });
+    el('scanZone').addEventListener('click', function() {
+      if (!el('pdpaConsent').checked) { toast('กรุณาให้ลูกค้ายินยอมก่อน', 'err'); }
+    });
+    el('idFile').addEventListener('change', function() { handleIDFile(this.files[0]); });
+    el('btnShowIDForm').addEventListener('click', function() { el('idFormWrap').style.display = 'block'; });
+
+    // Pill groups
+    var colorMap = function(v) {
+      var m = { 'ไม่มีรอย': 'cp-green', 'รอยเล็กน้อย': 'cp-blue', 'รอยขีดเล็กน้อย': 'cp-blue', 'รอยชัดเจน': 'cp-orange', 'รอยชัดเจน / บุบ': 'cp-orange', 'แตก / เสีย': 'cp-red', 'บุบหนัก / งอ': 'cp-red', 'ศูนย์ไทย (TH)': 'cp-green', 'ศูนย์นอก': 'cp-blue', 'นำเข้าส่วนตัว': 'cp-orange', 'อื่นๆ': 'cp-red', 'ปกติทุกฟังก์ชัน': 'cp-green', 'มีปัญหาบางส่วน': 'cp-orange', 'ใช้งานไม่ได้': 'cp-red' };
+      return m[v] || 'cp-green';
+    };
+
+    document.querySelectorAll('#originPills .cond-pill').forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        document.querySelectorAll('#originPills .cond-pill').forEach(function(p) { p.className = 'cond-pill'; });
+        pill.className = 'cond-pill ' + colorMap(pill.dataset.v);
+        sc_origin = pill.dataset.v;
+        el('originOther').style.display = pill.dataset.v === 'อื่นๆ' ? 'block' : 'none';
+      });
+    });
+    document.querySelectorAll('#screenPills .cond-pill').forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        document.querySelectorAll('#screenPills .cond-pill').forEach(function(p) { p.className = 'cond-pill'; });
+        pill.className = 'cond-pill ' + colorMap(pill.dataset.v);
+        sc_screen = pill.dataset.v;
+      });
+    });
+    document.querySelectorAll('#bodyPills .cond-pill').forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        document.querySelectorAll('#bodyPills .cond-pill').forEach(function(p) { p.className = 'cond-pill'; });
+        pill.className = 'cond-pill ' + colorMap(pill.dataset.v);
+        sc_body = pill.dataset.v;
+      });
+    });
+    document.querySelectorAll('#funcPills .cond-pill').forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        document.querySelectorAll('#funcPills .cond-pill').forEach(function(p) { p.className = 'cond-pill'; });
+        pill.className = 'cond-pill ' + colorMap(pill.dataset.v);
+        sc_func = pill.dataset.v;
+        el('funcProbWrap').style.display = pill.dataset.v !== 'ปกติทุกฟังก์ชัน' ? 'block' : 'none';
+      });
+    });
+
+    // Grade buttons
+    document.querySelectorAll('.grade-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.grade-btn').forEach(function(b) { b.className = 'grade-btn'; });
+        btn.className = 'grade-btn sel';
+        grade = btn.dataset.grade;
+      });
+    });
+
+    // Warranty
+    el('d_warranty').addEventListener('change', function() {
+      var noDate = ['ไม่มีประกัน / หมดแล้ว', 'ไม่ทราบ'];
+      el('warrantyDateWrap').style.display = noDate.indexOf(this.value) >= 0 ? 'none' : 'block';
+    });
+    el('d_warranty_date').addEventListener('change', calcWarranty);
+
+    // Repair toggle
+    el('repairTgl').addEventListener('change', function() {
+      el('repairWrap').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Price
+    el('p_amount').addEventListener('input', function() {
+      el('priceAmt').textContent = (parseInt(this.value) || 0).toLocaleString('th-TH');
+    });
+
+    // Payment
+    el('pt-cash').addEventListener('click', function() { setPayment('cash'); });
+    el('pt-transfer').addEventListener('click', function() { setPayment('transfer'); });
+    el('slipFile').addEventListener('change', function() { handleSlipFile(this.files[0]); });
+
+    // Signatures
+    el('btnClearBuyer').addEventListener('click', function() { clearCanvas('buy'); });
+    el('btnConfirmBuyer').addEventListener('click', function() { confirmSig('buy'); });
+    el('btnClearSeller').addEventListener('click', function() { clearCanvas('sel'); });
+    el('btnConfirmSeller').addEventListener('click', function() { confirmSig('sel'); });
+
+    // Doc
+    el('btnGenDoc').addEventListener('click', generateDoc);
+    el('btnDlContract').addEventListener('click', function() { dlDoc('contract'); });
+    el('btnDlReceipt').addEventListener('click', function() { dlDoc('receipt'); });
+    el('btnNewRecord').addEventListener('click', newRecord);
+
+    // Dashboard / History
+    el('btnExportDash').addEventListener('click', exportCSV);
+    el('btnExportHist').addEventListener('click', exportCSV);
+    el('searchQ').addEventListener('input', renderHistory);
+
+    // Settings
+    el('btnChangePin').addEventListener('click', changePin);
+    el('btnExportSet').addEventListener('click', exportCSV);
+    el('btnClearData').addEventListener('click', clearAllData);
+
+    // Search
+    el('searchQ').addEventListener('input', renderHistory);
+  });
+
+})();
+</script>
+</body>
+</html>
