@@ -593,7 +593,6 @@ input:checked+.tslider:before{transform:translateX(18px)}
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
         'Prefer': 'return=minimal'
       },
       body: JSON.stringify({
@@ -623,7 +622,6 @@ input:checked+.tslider:before{transform:translateX(18px)}
     fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500&_=' + Date.now(), {
       headers: {
         'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
         'Cache-Control': 'no-cache'
       },
       cache: 'no-store'
@@ -659,7 +657,6 @@ input:checked+.tslider:before{transform:translateX(18px)}
     fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500&_=' + Date.now(), {
       headers: {
         'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
         'Cache-Control': 'no-cache'
       },
       cache: 'no-store'
