@@ -651,6 +651,9 @@ input:checked+.tslider:before{transform:translateX(18px)}
   }
 
   function fetchAndRender(callback) {
+    var histEl = el('histList');
+    var recentEl = el('recentList');
+    if (histEl) histEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">กำลังโหลดข้อมูล...</div>';
     fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500', {
       headers: {
         'apikey': SUPABASE_KEY,
@@ -1244,11 +1247,41 @@ input:checked+.tslider:before{transform:translateX(18px)}
 
   function renderHistory() {
     var q = (el('searchQ').value || '').toLowerCase();
-    var f = records.filter(function(r) { return [r.cName, r.deviceFull, r.dSerial, r.docNo].join(' ').toLowerCase().indexOf(q) >= 0; });
-    var tagCls = { A: 'background:#f0fdf4;color:#15803d;border-color:#86efac', B: 'background:#eff6ff;color:#1d4ed8;border-color:#93c5fd', C: 'background:#fff7ed;color:#c2410c;border-color:#fdba74', D: 'background:#fef2f2;color:#dc2626;border-color:#fca5a5' };
-    el('histList').innerHTML = f.length ? f.map(function(r) {
-      return '<div class="hist-item" onclick="showDetail(\'' + r.docNo + '\')" style="cursor:pointer"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;font-weight:600">' + r.cName + '</span><span style="color:var(--green);font-weight:700;font-family:monospace">฿' + (r.price || 0).toLocaleString('th-TH') + '</span></div><div style="font-size:12px;color:var(--text2);margin-bottom:3px">' + r.deviceFull + '</div><div style="display:flex;gap:7px;flex-wrap:wrap;font-size:11px;color:var(--text3)"><span style="font-family:monospace">' + r.docNo + '</span><span>' + r.date + '</span><span style="display:inline-flex;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid;' + (tagCls[r.grade] || '') + '">เกรด ' + r.grade + '</span><span>' + r.payMethod + '</span><span>' + (r.staff || '') + '</span></div></div>';
-    }).join('') : '<div style="text-align:center;padding:40px;color:var(--text3)"><div style="font-size:36px;margin-bottom:8px">&#128205;</div><div>ไม่พบรายการ</div></div>';
+    var f = records.filter(function(r) {
+      return [r.cName, r.deviceFull, r.dSerial, r.docNo].join(' ').toLowerCase().indexOf(q) >= 0;
+    });
+    var tagCls = {
+      A: 'background:#f0fdf4;color:#15803d;border:1px solid #86efac',
+      B: 'background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd',
+      C: 'background:#fff7ed;color:#c2410c;border:1px solid #fdba74',
+      D: 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5'
+    };
+    var histEl = el('histList');
+    if (!f.length) {
+      histEl.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)"><div style="font-size:36px;margin-bottom:8px">&#128205;</div><div>ไม่พบรายการ</div></div>';
+      return;
+    }
+    histEl.innerHTML = f.map(function(r) {
+      return '<div class="hist-item" data-docno="' + r.docNo + '" style="cursor:pointer">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+          '<span style="font-size:13px;font-weight:600">' + r.cName + '</span>' +
+          '<span style="color:var(--green);font-weight:700;font-family:monospace">฿' + (r.price||0).toLocaleString('th-TH') + '</span>' +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--text2);margin-bottom:3px">' + r.deviceFull + '</div>' +
+        '<div style="display:flex;gap:7px;flex-wrap:wrap;font-size:11px;color:var(--text3)">' +
+          '<span style="font-family:monospace">' + r.docNo + '</span>' +
+          '<span>' + r.date + '</span>' +
+          '<span style="display:inline-flex;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid;' + (tagCls[r.grade]||'') + '">เกรด ' + r.grade + '</span>' +
+          '<span>' + r.payMethod + '</span>' +
+          '<span>' + (r.staff||'') + '</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    histEl.querySelectorAll('.hist-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        showDetail(this.dataset.docno);
+      });
+    });
   }
 
   // ===== NEW RECORD =====
