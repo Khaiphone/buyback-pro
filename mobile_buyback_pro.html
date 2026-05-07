@@ -557,8 +557,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
 </div>
 
 <!-- DETAIL MODAL -->
-<div id="detailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:flex-end;justify-content:center">
-  <div style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:700px;padding:20px;max-height:85vh;overflow-y:auto">
+<div id="detailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;align-items:flex-end;justify-content:center;padding:0" onclick="window.closeDetail()">
+  <div style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-width:700px;padding:20px;max-height:85vh;overflow-y:auto" onclick="event.stopPropagation()">
     <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px"></div>
     <div id="detailBody"></div>
   </div>
@@ -620,11 +620,13 @@ input:checked+.tslider:before{transform:translateX(18px)}
   }
 
   function loadFromSupabase() {
-    fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500', {
+    fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500&_=' + Date.now(), {
       headers: {
         'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY
-      }
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Cache-Control': 'no-cache'
+      },
+      cache: 'no-store'
     }).then(function(res) { return res.json(); })
     .then(function(data) {
       if (Array.isArray(data) && data.length > 0) {
@@ -654,11 +656,13 @@ input:checked+.tslider:before{transform:translateX(18px)}
     var histEl = el('histList');
     var recentEl = el('recentList');
     if (histEl) histEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">กำลังโหลดข้อมูล...</div>';
-    fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500', {
+    fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500&_=' + Date.now(), {
       headers: {
         'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY
-      }
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Cache-Control': 'no-cache'
+      },
+      cache: 'no-store'
     }).then(function(res) { return res.json(); })
     .then(function(data) {
       if (Array.isArray(data)) {
@@ -726,6 +730,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
   function closeDetail() {
     document.getElementById('detailModal').style.display = 'none';
   }
+  window.closeDetail = closeDetail;
+  window.regenDoc = regenDoc;
 
   function regenDoc(docNo) {
     var r = records.filter(function(x) { return x.docNo === docNo; })[0];
