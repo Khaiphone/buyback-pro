@@ -573,6 +573,73 @@ input:checked+.tslider:before{transform:translateX(18px)}
   var docCounter = 1;
   var records = [];
   var ownerPin = localStorage.getItem('mbp_pin') || '1234';
+
+  // ===== SUPABASE CONFIG =====
+  var SUPABASE_URL = 'https://tceudufcjncbqhfyzlic.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_55_BOVfGExlH6zSlCpcT9A_OlY_wHBg';
+
+  function saveToSupabase(record) {
+    fetch(SUPABASE_URL + '/rest/v1/records', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        doc_no: record.docNo,
+        date: record.date,
+        customer_name: record.cName,
+        customer_id: record.cId,
+        device: record.deviceFull,
+        serial: record.dSerial,
+        grade: record.grade,
+        price: record.price,
+        pay_method: record.payMethod,
+        staff: record.staff
+      })
+    }).then(function(res) {
+      if (res.ok) {
+        toast('บันทึกลง Cloud แล้ว', 'ok');
+      } else {
+        console.error('Supabase error:', res.status);
+      }
+    }).catch(function(err) {
+      console.error('Supabase error:', err);
+    });
+  }
+
+  function loadFromSupabase() {
+    fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500', {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      }
+    }).then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (Array.isArray(data) && data.length > 0) {
+        records = data.map(function(r) {
+          return {
+            docNo: r.doc_no,
+            date: r.date,
+            cName: r.customer_name,
+            cId: r.customer_id,
+            deviceFull: r.device,
+            dSerial: r.serial,
+            grade: r.grade,
+            price: r.price,
+            payMethod: r.pay_method,
+            staff: r.staff,
+            timestamp: new Date(r.created_at).getTime()
+          };
+        });
+        try { localStorage.setItem('mbp_v5', JSON.stringify(records.slice(0, 500))); } catch(e) {}
+      }
+    }).catch(function(err) {
+      console.error('Load error:', err);
+    });
+  }
   var pinInput = '';
   var canvBuyer = null, ctxBuyer = null;
   var canvSeller = null, ctxSeller = null;
@@ -660,6 +727,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
     if (isOwner) el('recordCount').textContent = records.length + ' รายการ';
     el('p_date').value = new Date().toISOString().split('T')[0];
     initCanvases();
+    loadFromSupabase();
   }
 
   function logout() {
@@ -944,8 +1012,10 @@ input:checked+.tslider:before{transform:translateX(18px)}
     var deviceFull = (dBrand + ' ' + dModel + ' ' + dStorage + ' ' + dColor).trim();
     var dNote = val('d_note') || '--';
 
-    records.unshift({ docNo: docNo, date: dateStr, cName: cName, cId: cId, deviceFull: deviceFull, dSerial: dSerial, grade: grade, price: price, payMethod: payTh, staff: staff, timestamp: Date.now() });
+    var newRecord = { docNo: docNo, date: dateStr, cName: cName, cId: cId, deviceFull: deviceFull, dSerial: dSerial, grade: grade, price: price, payMethod: payTh, staff: staff, timestamp: Date.now() };
+    records.unshift(newRecord);
     try { localStorage.setItem('mbp_v5', JSON.stringify(records.slice(0, 500))); } catch(e) {}
+    saveToSupabase(newRecord);
 
     var idSec = (pdpaOk && idPhotoData) ? '<div style="margin:6px 0"><div style="font-size:9.5px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">สำเนาบัตรประชาชน (ลูกค้ายินยอม PDPA)</div><img src="' + idPhotoData + '" style="max-width:200px;max-height:120px;object-fit:cover;border:1px solid #ddd;border-radius:4px"></div>' : '';
     var pdpaTxt = pdpaOk ? 'ลูกค้ายินยอมให้จัดเก็บรูปบัตร (PDPA 2562)' : 'ไม่ได้เก็บรูปบัตร -- ใช้ข้อมูลที่กรอกแทน';
