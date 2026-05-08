@@ -611,10 +611,14 @@ input:checked+.tslider:before{transform:translateX(18px)}
       if (res.ok) {
         toast('บันทึกลง Cloud แล้ว', 'ok');
       } else {
-        console.error('Supabase error:', res.status);
+        res.text().then(function(t) {
+          console.error('Supabase error:', res.status, t);
+          toast('บันทึก Cloud ไม่สำเร็จ (' + res.status + ')', 'err');
+        });
       }
     }).catch(function(err) {
       console.error('Supabase error:', err);
+      toast('บันทึก Cloud ไม่สำเร็จ: ' + err.message, 'err');
     });
   }
 
@@ -1096,7 +1100,9 @@ input:checked+.tslider:before{transform:translateX(18px)}
     var y = now.getFullYear().toString().slice(-2);
     var m = String(now.getMonth() + 1).padStart(2, '0');
     var d = String(now.getDate()).padStart(2, '0');
-    return 'MB-' + y + m + d + '-' + String(docCounter++).padStart(4, '0');
+    // Use last 4 digits of timestamp to ensure uniqueness across devices
+    var unique = String(Date.now()).slice(-4);
+    return 'MB-' + y + m + d + '-' + unique;
   }
 
   function generateDoc() {
