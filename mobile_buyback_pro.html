@@ -150,6 +150,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
 .acc-lbl{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;background:var(--surface2);padding:6px 11px;border-radius:20px;border:1px solid var(--border)}
 .acc-lbl input{width:auto;cursor:pointer}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div id="loginScreen">
@@ -604,26 +606,94 @@ input:checked+.tslider:before{transform:translateX(18px)}
   var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzT9ZHIWeTIhAUbwFFst68T-8ktUQel0jDohUYrW19by3H0X2wVpjlCwa7qU44wHTA/exec';
 
   function saveToDrive(contractHtml, receiptHtml, docNo) {
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        docNo: docNo,
-        contractHtml: contractHtml,
-        receiptHtml: receiptHtml
-      })
-    }).then(function(res) { return res.json(); })
-    .then(function(data) {
-      if (data.success) {
-        toast('บันทึกลง Drive แล้ว: ' + docNo, 'ok');
-      } else {
-        console.error('Drive error:', data);
-        toast('Drive ไม่สำเร็จ', 'err');
-      }
-    }).catch(function(err) {
-      console.error('Drive error:', err);
-      toast('Drive ไม่สำเร็จ', 'err');
+    // Render contract HTML to PDF using html2canvas + jsPDF
+    toast('กำลังสร้าง PDF...', '');
+    
+    // Create hidden iframe to render HTML
+    renderHtmlToPdfBase64(contractHtml, function(contractPdfBase64) {
+      renderHtmlToPdfBase64(receiptHtml, function(receiptPdfBase64) {
+        // Send both PDFs to Apps Script
+        fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            docNo: docNo,
+            contractPdf: contractPdfBase64,
+            receiptPdf: receiptPdfBase64
+          })
+        }).then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.success) {
+            toast('บันทึก PDF ลง Drive แล้ว', 'ok');
+          } else {
+            console.error('Drive error:', data);
+            toast('Drive ไม่สำเร็จ', 'err');
+          }
+        }).catch(function(err) {
+          console.error('Drive error:', err);
+          toast('Drive ไม่สำเร็จ', 'err');
+        });
+      });
     });
+  }
+
+  function renderHtmlToPdfBase64(html, callback) {
+    var iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.top = '-9999px';
+    iframe.style.left = '-9999px';
+    iframe.style.width = '794px';
+    iframe.style.height = '1123px';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+    
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(html);
+    iframe.contentDocument.close();
+    
+    setTimeout(function() {
+      html2canvas(iframe.contentDocument.body, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 794,
+        windowWidth: 794
+      }).then(function(canvas) {
+        var imgData = canvas.toDataURL('image/jpeg', 0.95);
+        var pdf = new window.jspdf.jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+        var pdfWidth = pdf.internal.pageSize.getWidth();
+        var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        var pageHeight = pdf.internal.pageSize.getHeight();
+        
+        if (pdfHeight <= pageHeight) {
+          pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        } else {
+          var heightLeft = pdfHeight;
+          var position = 0;
+          pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+          heightLeft -= pageHeight;
+          while (heightLeft > 0) {
+            position = heightLeft - pdfHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+            heightLeft -= pageHeight;
+          }
+        }
+        
+        var base64 = pdf.output('datauristring').split(',')[1];
+        document.body.removeChild(iframe);
+        callback(base64);
+      }).catch(function(err) {
+        console.error('html2canvas error:', err);
+        document.body.removeChild(iframe);
+        callback(null);
+      });
+    }, 1500);
   }
 
   // ===== GOOGLE DRIVE CONFIG (OAuth - legacy) =====
