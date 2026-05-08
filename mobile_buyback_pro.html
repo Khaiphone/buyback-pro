@@ -960,12 +960,12 @@ input:checked+.tslider:before{transform:translateX(18px)}
     var contractHTML =
       '<div class="lh" style="background:#1a1a2e"><div><div style="font-size:15px;font-weight:700;color:#fff">สัญญาซื้อขายโทรศัพท์มือถือ</div><div style="font-size:10px;opacity:.65;color:#fff;margin-top:2px">สำเนาเอกสาร (ไม่มีลายเซ็น) - Mobile Buyback Pro</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:#c9a84c">CONTRACT (COPY)</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + r.docNo + '</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + r.date + '</div></div></div>' +
       '<div class="body">' +
-      '<div class="sec">§1 ข้อมูลผู้ขาย</div>' +
+      '<div style="page-break-inside:avoid"><div class="sec">§1 ข้อมูลผู้ขาย</div>' +
       '<div class="grid">' +
         '<div class="f"><span class="fl">ชื่อ-นามสกุล</span><span class="fv">' + r.cName + '</span></div>' +
         '<div class="f"><span class="fl">เลขบัตรประชาชน</span><span class="fv">' + r.cId + '</span></div>' +
       '</div>' +
-      '<div class="sec">§2 รายละเอียดสินค้า</div>' +
+      '</div><div style="page-break-inside:avoid"><div class="sec">§2 รายละเอียดสินค้า</div>' +
       '<div class="grid">' +
         '<div class="f"><span class="fl">สินค้า</span><span class="fv">' + r.deviceFull + '</span></div>' +
         '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + r.dSerial + '</span></div>' +
@@ -1407,13 +1407,13 @@ input:checked+.tslider:before{transform:translateX(18px)}
 
     var contractHTML = '<div class="lh" style="background:#1a1a2e"><div><div style="font-size:15px;font-weight:700;color:#fff">สัญญาซื้อขายโทรศัพท์มือถือ</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">ขายไอโฟน.com | The Plant วงแหวน-รังสิต เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี | โทร 095-553-5167 LINE: @khaiphone</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#c9a84c">CONTRACT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + ' ' + timeStr + ' น.</div></div></div>';
     contractHTML += '<div class="body">';
-    contractHTML += '<div class="sec">§1 ข้อมูลผู้ขาย</div>' + idSec;
+    contractHTML += '<div style="page-break-inside:avoid"><div class="sec">§1 ข้อมูลผู้ขาย</div>' + idSec;
     contractHTML += '<div class="grid">' + fRow('ชื่อ-นามสกุล', cName) + fRow('เลขบัตรประชาชน', cId) + fRow('วันเกิด', cDob) + fRow('เบอร์โทรศัพท์', cPhone) + '<div class="f" style="grid-column:1/-1"><span class="fl">ที่อยู่</span><span class="fv">' + cAddr + '</span></div></div>';
     contractHTML += '<div style="font-size:10px;color:#888;font-style:italic;margin-top:2px">' + pdpaTxt + '</div>';
-    contractHTML += '<div class="sec">§2 รายละเอียดสินค้า</div>';
+    contractHTML += '</div><div style="page-break-inside:avoid"><div class="sec">§2 รายละเอียดสินค้า</div>';
     contractHTML += '<div class="grid">' + fRow('ยี่ห้อ / รุ่น', dBrand + ' ' + dModel) + fRow('แหล่งที่มา', dOrigin) + fRow('ความจุ / สี', dStorage + ' / ' + dColor) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + dSerial + '</span></div>' + '<div class="f"><span class="fl">IMEI</span><span class="fv" style="font-family:monospace">' + dImei + '</span></div>' + fRow('เกรดสภาพ', gradeBadge) + fRow('สภาพหน้าจอ', sc_screen) + fRow('สภาพบอดี้', sc_body) + fRow('ฟังก์ชัน', sc_func + (funcProb ? ' - ' + funcProb : '')) + fRow('แบตเตอรี่', dBatt) + fRow('Apple ID / iCloud', dIcloud) + fRow('สถานะประกัน', warrantyFull) + fRow('ประวัติซ่อม', repairDetail) + fRow('อุปกรณ์ที่รับมาด้วย', accStr) + '<div class="f" style="grid-column:1/-1"><span class="fl">หมายเหตุ</span><span class="fv">' + dNote + '</span></div></div>';
     contractHTML += '<div class="sec">§3 ราคาและการชำระเงิน</div>';
-    contractHTML += '<div class="grid"><div class="f"><span class="fl">ราคาที่ตกลง</span><span class="fv" style="font-size:15px;font-weight:700">' + price.toLocaleString('th-TH') + ' บาทถ้วน</span></div>' + fRow('วิธีชำระ', payTh) + bankRow + fRow('วันที่ทำรายการ', dateStr) + fRow('พนักงาน', staff) + fRow('ผู้ซื้อ (ร้าน)', 'ขายไอโฟน.com') + fRow('ที่อยู่ผู้ซื้อ', 'เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี 12130') + fRow('เบอร์โทร / LINE', '095-553-5167 / @khaiphone') + '</div>' + slipSec;
+    contractHTML += '<div class="grid"><div class="f"><span class="fl">ราคาที่ตกลง</span><span class="fv" style="font-size:15px;font-weight:700">' + price.toLocaleString('th-TH') + ' บาทถ้วน</span></div>' + fRow('วิธีชำระ', payTh) + bankRow + fRow('วันที่ทำรายการ', dateStr) + fRow('พนักงาน', staff) + fRow('ผู้ซื้อ (ร้าน)', 'ขายไอโฟน.com') + fRow('ที่อยู่ผู้ซื้อ', 'เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี 12130') + fRow('เบอร์โทร / LINE', '095-553-5167 / @khaiphone') + '</div></div>' + slipSec;
     contractHTML += '<div class="sec">§4 ข้อกำหนดและเงื่อนไข</div>';
     contractHTML += '<div class="terms">1. ผู้ขายรับรองว่าอุปกรณ์เป็นทรัพย์สินของตนโดยชอบด้วยกฎหมาย ไม่ได้มาจากการลักทรัพย์หรือผิดกฎหมายใดๆ (ป.อ. มาตรา 335, 357)<br>2. ผู้ขายยินยอมโอนกรรมสิทธิ์ทั้งสิ้นให้แก่ผู้ซื้อโดยเด็ดขาด (ป.พ.พ. มาตรา 453-459)<br>3. ผู้ขายรับทราบสภาพสินค้าตามที่ระบุ ยินยอมรับราคาโดยไม่มีข้อโต้แย้ง<br>4. ผู้ขายยินยอมให้เก็บข้อมูลตาม PDPA พ.ศ. 2562<br>5. สัญญานี้มีผลสมบูรณ์ตาม ป.พ.พ. มาตรา 453 โดยไม่ต้องมีพยาน</div>';
     contractHTML += '<div class="sig2"><div class="sb"><div class="sa"><img src="' + sigBuyImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ขาย</strong><br>' + cName + '<br>เลขบัตร: ' + cId + '</div></div><div class="sb"><div class="sa"><img src="' + sigSelImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ซื้อ / พนักงาน</strong><br>' + staff + '</div></div></div>';
