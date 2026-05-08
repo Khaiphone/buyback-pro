@@ -529,12 +529,11 @@ input:checked+.tslider:before{transform:translateX(18px)}
     <div class="card-body">
       <div class="setting-row">
         <div>
-          <div class="setting-label">เชื่อมต่อ Google Drive</div>
-          <div class="setting-sub" id="driveStatus">Google Drive: ยังไม่ได้เชื่อมต่อ</div>
+          <div class="setting-label">บันทึก Drive อัตโนมัติ</div>
+          <div class="setting-sub" style="color:var(--green)">✅ เปิดใช้งานแล้ว — ไม่ต้องตั้งค่าเพิ่ม</div>
         </div>
-        <button class="btn btn-primary btn-sm" type="button" id="btnConnectDrive" style="width:auto;background:#1a73e8">เชื่อมต่อ</button>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:4px">เมื่อเชื่อมต่อแล้ว เอกสารทุกฉบับจะถูกบันทึกลงโฟลเดอร์ "Buyback Records" ใน Drive อัตโนมัติ</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">เอกสารทุกฉบับจะถูกบันทึกลงโฟลเดอร์ "Buyback Records" ใน Drive อัตโนมัติทันทีที่ออกเอกสาร</div>
     </div>
   </div>
 
@@ -601,7 +600,33 @@ input:checked+.tslider:before{transform:translateX(18px)}
   var SUPABASE_URL = 'https://tceudufcjncbqhfyzlic.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVkdWZjam5jYnFoZnl6bGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTA3OTYsImV4cCI6MjA5MzcyNjc5Nn0.XXDAEnioT5x2ukUJ_3MwvvrNNJqR9l1SKxii6hZOZxE';
 
-  // ===== GOOGLE DRIVE CONFIG =====
+  // ===== GOOGLE APPS SCRIPT CONFIG =====
+  var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzT9ZHIWeTIhAUbwFFst68T-8ktUQel0jDohUYrW19by3H0X2wVpjlCwa7qU44wHTA/exec';
+
+  function saveToDrive(contractHtml, receiptHtml, docNo) {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        docNo: docNo,
+        contractHtml: contractHtml,
+        receiptHtml: receiptHtml
+      })
+    }).then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.success) {
+        toast('บันทึกลง Drive แล้ว: ' + docNo, 'ok');
+      } else {
+        console.error('Drive error:', data);
+        toast('Drive ไม่สำเร็จ', 'err');
+      }
+    }).catch(function(err) {
+      console.error('Drive error:', err);
+      toast('Drive ไม่สำเร็จ', 'err');
+    });
+  }
+
+  // ===== GOOGLE DRIVE CONFIG (OAuth - legacy) =====
   var GDRIVE_CLIENT_ID = '364110486621-611d9i0sq4l3i311p8sd00j09qbf9vji.apps.googleusercontent.com';
   var GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
   var gdriveToken = null;
@@ -1216,13 +1241,13 @@ input:checked+.tslider:before{transform:translateX(18px)}
     if (!sigSelOK) { toast('กรุณายืนยันลายเซ็นพนักงานก่อน', 'err'); return; }
     showLoading('กำลังออกเอกสาร...');
     setTimeout(function() { buildDoc(); hideLoading(); el('genBtnWrap').style.display = 'none'; el('docWrap').style.display = 'block';
-    if (gdriveConnected && window._contractHTML) {
-      var fLink = '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">';
+    // Auto save to Google Drive via Apps Script
+    if (window._contractHTML) {
+      var fLink2 = '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">';
       var css2 = window._docCSS || '';
-      var cFull = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' + fLink + '<style>' + css2 + '</style></head><body>' + window._contractHTML + '</body></html>';
-      var rFull = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' + fLink + '<style>' + css2 + '</style></head><body>' + window._receiptHTML + '</body></html>';
-      uploadToDrive(cFull, window._docNo + '-สัญญา.html', window._docNo);
-      uploadToDrive(rFull, window._docNo + '-ใบรับเงิน.html', window._docNo);
+      var cFull = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' + fLink2 + '<style>' + css2 + '</style></head><body>' + window._contractHTML + '</body></html>';
+      var rFull = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' + fLink2 + '<style>' + css2 + '</style></head><body>' + window._receiptHTML + '</body></html>';
+      saveToDrive(cFull, rFull, window._docNo);
     }
     setTimeout(function() { el('docWrap').scrollIntoView({ behavior: 'smooth' }); }, 100); }, 700);
   }
