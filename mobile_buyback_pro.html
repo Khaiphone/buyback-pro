@@ -525,6 +525,20 @@ input:checked+.tslider:before{transform:translateX(18px)}
     </div>
   </div>
   <div class="card">
+    <div class="card-header"><div class="ch-icon">&#128196;</div><div><div class="ch-title">Google Drive</div><div class="ch-sub">บันทึกเอกสารขึ้น Cloud อัตโนมัติ</div></div></div>
+    <div class="card-body">
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">เชื่อมต่อ Google Drive</div>
+          <div class="setting-sub" id="driveStatus">Google Drive: ยังไม่ได้เชื่อมต่อ</div>
+        </div>
+        <button class="btn btn-primary btn-sm" type="button" id="btnConnectDrive" style="width:auto;background:#1a73e8">เชื่อมต่อ</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">เมื่อเชื่อมต่อแล้ว เอกสารทุกฉบับจะถูกบันทึกลงโฟลเดอร์ "Buyback Records" ใน Drive อัตโนมัติ</div>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card-header"><div class="ch-icon">&#128190;</div><div><div class="ch-title">ข้อมูล</div></div></div>
     <div class="card-body">
       <div class="setting-row">
@@ -586,6 +600,105 @@ input:checked+.tslider:before{transform:translateX(18px)}
   // ===== SUPABASE CONFIG =====
   var SUPABASE_URL = 'https://tceudufcjncbqhfyzlic.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVkdWZjam5jYnFoZnl6bGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTA3OTYsImV4cCI6MjA5MzcyNjc5Nn0.XXDAEnioT5x2ukUJ_3MwvvrNNJqR9l1SKxii6hZOZxE';
+
+  // ===== GOOGLE DRIVE CONFIG =====
+  var GDRIVE_CLIENT_ID = '364110486621-611d9i0sq4l3i311p8sd00j09qbf9vji.apps.googleusercontent.com';
+  var GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
+  var gdriveToken = null;
+  var gdriveConnected = false;
+
+  function initGoogleDrive() {
+    var script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.onload = function() {
+      google.accounts.oauth2.initTokenClient({
+        client_id: GDRIVE_CLIENT_ID,
+        scope: GDRIVE_SCOPES,
+        callback: function(resp) {
+          if (resp.access_token) {
+            gdriveToken = resp.access_token;
+            gdriveConnected = true;
+            el('driveStatus').textContent = 'Google Drive: เชื่อมต่อแล้ว ✅';
+            el('driveStatus').style.color = 'var(--green)';
+            el('btnConnectDrive').textContent = 'เชื่อมต่อแล้ว ✅';
+            el('btnConnectDrive').style.background = 'var(--green)';
+            toast('เชื่อมต่อ Google Drive แล้ว', 'ok');
+          }
+        }
+      });
+      window._tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GDRIVE_CLIENT_ID,
+        scope: GDRIVE_SCOPES,
+        callback: function(resp) {
+          if (resp.access_token) {
+            gdriveToken = resp.access_token;
+            gdriveConnected = true;
+            el('driveStatus').textContent = 'Google Drive: เชื่อมต่อแล้ว ✅';
+            el('driveStatus').style.color = 'var(--green)';
+            el('btnConnectDrive').textContent = 'เชื่อมต่อแล้ว ✅';
+            el('btnConnectDrive').style.background = 'var(--green)';
+            toast('เชื่อมต่อ Google Drive แล้ว', 'ok');
+          }
+        }
+      });
+    };
+    document.head.appendChild(script);
+  }
+
+  function connectDrive() {
+    if (window._tokenClient) {
+      window._tokenClient.requestAccessToken();
+    } else {
+      toast('กำลังโหลด Google API...', '');
+      setTimeout(function() {
+        if (window._tokenClient) window._tokenClient.requestAccessToken();
+      }, 2000);
+    }
+  }
+
+  function uploadToDrive(htmlContent, filename, docNo) {
+    if (!gdriveToken) { toast('กรุณาเชื่อมต่อ Google Drive ก่อน', 'err'); return; }
+    var CRLF = '\r\n';
+    var boundary = '-------314159265358979323846';
+    var delimiter = '--' + boundary + CRLF;
+    var close_delim = '--' + boundary + '--';
+    ensureDriveFolder(function(folderId) {
+      var metadata = JSON.stringify({ name: filename, mimeType: 'text/html', parents: [folderId] });
+      var body = delimiter + 'Content-Type: application/json' + CRLF + CRLF + metadata + CRLF + delimiter + 'Content-Type: text/html' + CRLF + CRLF + htmlContent + CRLF + close_delim;
+      fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + gdriveToken, 'Content-Type': 'multipart/related; boundary="-------314159265358979323846"' },
+        body: body
+      }).then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.id) { toast('บันทึกลง Drive แล้ว: ' + filename, 'ok'); }
+        else { console.error('Drive error:', data); toast('Drive upload ไม่สำเร็จ', 'err'); }
+      }).catch(function(err) { console.error('Drive error:', err); toast('Drive upload ไม่สำเร็จ', 'err'); });
+    });
+  }
+
+    function ensureDriveFolder(callback) {
+    fetch("https://www.googleapis.com/drive/v3/files?q=name%3D'Buyback+Records'+and+mimeType%3D'application%2Fvnd.google-apps.folder'+and+trashed%3Dfalse&fields=files(id,name)", {
+      headers: { 'Authorization': 'Bearer ' + gdriveToken }
+    }).then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.files && data.files.length > 0) {
+        callback(data.files[0].id);
+      } else {
+        fetch('https://www.googleapis.com/drive/v3/files', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + gdriveToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'Buyback Records', mimeType: 'application/vnd.google-apps.folder' })
+        }).then(function(res) { return res.json(); })
+        .then(function(folder) { callback(folder.id); });
+      }
+    });
+  }
+
+    function updateDriveLink(docNo, driveUrl) {
+    // Store drive link - could update Supabase record later
+    console.log('Drive link for ' + docNo + ': ' + driveUrl);
+  }
 
   function saveToSupabase(record) {
     fetch(SUPABASE_URL + '/rest/v1/records', {
@@ -1102,7 +1215,16 @@ input:checked+.tslider:before{transform:translateX(18px)}
     if (!sigBuyOK) { toast('กรุณายืนยันลายเซ็นผู้ขายก่อน', 'err'); return; }
     if (!sigSelOK) { toast('กรุณายืนยันลายเซ็นพนักงานก่อน', 'err'); return; }
     showLoading('กำลังออกเอกสาร...');
-    setTimeout(function() { buildDoc(); hideLoading(); el('genBtnWrap').style.display = 'none'; el('docWrap').style.display = 'block'; setTimeout(function() { el('docWrap').scrollIntoView({ behavior: 'smooth' }); }, 100); }, 700);
+    setTimeout(function() { buildDoc(); hideLoading(); el('genBtnWrap').style.display = 'none'; el('docWrap').style.display = 'block';
+    if (gdriveConnected && window._contractHTML) {
+      var fLink = '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">';
+      var css2 = window._docCSS || '';
+      var cFull = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' + fLink + '<style>' + css2 + '</style></head><body>' + window._contractHTML + '</body></html>';
+      var rFull = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' + fLink + '<style>' + css2 + '</style></head><body>' + window._receiptHTML + '</body></html>';
+      uploadToDrive(cFull, window._docNo + '-สัญญา.html', window._docNo);
+      uploadToDrive(rFull, window._docNo + '-ใบรับเงิน.html', window._docNo);
+    }
+    setTimeout(function() { el('docWrap').scrollIntoView({ behavior: 'smooth' }); }, 100); }, 700);
   }
 
   function buildDoc() {
@@ -1152,6 +1274,11 @@ input:checked+.tslider:before{transform:translateX(18px)}
     records.unshift(newRecord);
     try { localStorage.setItem('mbp_v5', JSON.stringify(records.slice(0, 500))); } catch(e) {}
     saveToSupabase(newRecord);
+    // Auto upload to Google Drive if connected
+    if (gdriveConnected) {
+      var fontLink2 = '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">';
+      // Will be called after buildDoc sets window._contractHTML
+    }
 
     var idSec = (pdpaOk && idPhotoData) ? '<div style="margin:6px 0"><div style="font-size:9.5px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">สำเนาบัตรประชาชน (ลูกค้ายินยอม PDPA)</div><img src="' + idPhotoData + '" style="max-width:200px;max-height:120px;object-fit:cover;border:1px solid #ddd;border-radius:4px"></div>' : '';
     var pdpaTxt = pdpaOk ? 'ลูกค้ายินยอมให้จัดเก็บรูปบัตร (PDPA 2562)' : 'ไม่ได้เก็บรูปบัตร -- ใช้ข้อมูลที่กรอกแทน';
@@ -1474,6 +1601,9 @@ input:checked+.tslider:before{transform:translateX(18px)}
 
     // Settings
     el('btnChangePin').addEventListener('click', changePin);
+    el('btnConnectDrive').addEventListener('click', connectDrive);
+    // Init Google Drive API
+    initGoogleDrive();
     el('btnExportSet').addEventListener('click', exportCSV);
     el('btnClearData').addEventListener('click', clearAllData);
 
