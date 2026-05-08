@@ -642,8 +642,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
     iframe.style.position = 'fixed';
     iframe.style.top = '-9999px';
     iframe.style.left = '-9999px';
-    iframe.style.width = '794px';
-    iframe.style.height = '1123px';
+    iframe.style.width = '740px';
+    iframe.style.height = '1px';
     iframe.style.border = 'none';
     document.body.appendChild(iframe);
     
@@ -652,36 +652,52 @@ input:checked+.tslider:before{transform:translateX(18px)}
     iframe.contentDocument.close();
     
     setTimeout(function() {
-      html2canvas(iframe.contentDocument.body, {
+      var body = iframe.contentDocument.body;
+      var A4_WIDTH_PX = 740;
+      html2canvas(body, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        width: 794,
-        windowWidth: 794
+        width: A4_WIDTH_PX,
+        windowWidth: A4_WIDTH_PX,
+        scrollX: 0,
+        scrollY: 0
       }).then(function(canvas) {
-        var imgData = canvas.toDataURL('image/jpeg', 0.95);
+        var imgData = canvas.toDataURL('image/jpeg', 0.92);
         var pdf = new window.jspdf.jsPDF({
           orientation: 'portrait',
           unit: 'mm',
           format: 'a4'
         });
-        var pdfWidth = pdf.internal.pageSize.getWidth();
-        var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        var pageHeight = pdf.internal.pageSize.getHeight();
+        var pdfW = pdf.internal.pageSize.getWidth();   // 210mm
+        var pdfH = pdf.internal.pageSize.getHeight();  // 297mm
+        var margin = 8; // 8mm margin
+        var printW = pdfW - (margin * 2);
+        var printH = (canvas.height / canvas.width) * printW;
+        var pageContentH = pdfH - (margin * 2);
         
-        if (pdfHeight <= pageHeight) {
-          pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        if (printH <= pageContentH) {
+          // Single page - fits perfectly
+          pdf.addImage(imgData, 'JPEG', margin, margin, printW, printH);
         } else {
-          var heightLeft = pdfHeight;
-          var position = 0;
-          pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-          heightLeft -= pageHeight;
-          while (heightLeft > 0) {
-            position = heightLeft - pdfHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-            heightLeft -= pageHeight;
+          // Multi page - split properly
+          var canvasPageH = Math.floor((pageContentH / printH) * canvas.height);
+          var pagesCount = Math.ceil(canvas.height / canvasPageH);
+          
+          for (var pg = 0; pg < pagesCount; pg++) {
+            if (pg > 0) pdf.addPage();
+            var srcY = pg * canvasPageH;
+            var srcH = Math.min(canvasPageH, canvas.height - srcY);
+            var sliceH = (srcH / canvas.height) * printH;
+            
+            var tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = srcH;
+            var ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+            var sliceData = tempCanvas.toDataURL('image/jpeg', 0.92);
+            pdf.addImage(sliceData, 'JPEG', margin, margin, printW, sliceH);
           }
         }
         
