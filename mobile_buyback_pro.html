@@ -585,7 +585,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
 
   // ===== SUPABASE CONFIG =====
   var SUPABASE_URL = 'https://tceudufcjncbqhfyzlic.supabase.co';
-  var SUPABASE_KEY = 'sb_publishable_55_BOVfGExlH6zSlCpcT9A_OlY_wHBg';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVkdWZjam5jYnFoZnl6bGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTA3OTYsImV4cCI6MjA5MzcyNjc5Nn0.XXDAEnioT5x2ukUJ_3MwvvrNNJqR9l1SKxii6hZOZxE';
 
   function saveToSupabase(record) {
     fetch(SUPABASE_URL + '/rest/v1/records', {
@@ -623,7 +623,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
   }
 
   function loadFromSupabase() {
-    fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500&apikey=' + SUPABASE_KEY, {
+    fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
     }).then(function(res) { return res.json(); })
     .then(function(data) {
       if (Array.isArray(data)) {
@@ -653,7 +654,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
     var histEl = el('histList');
     var recentEl = el('recentList');
     if (histEl) histEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3)">กำลังโหลดข้อมูล...</div>';
-    fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500&apikey=' + SUPABASE_KEY, {
+    fetch(SUPABASE_URL + '/rest/v1/records?order=created_at.desc&limit=500', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
     }).then(function(res) { return res.json(); })
     .then(function(data) {
       if (Array.isArray(data)) {
