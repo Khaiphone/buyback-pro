@@ -631,7 +631,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
       cache: 'no-store'
     }).then(function(res) { return res.json(); })
     .then(function(data) {
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         records = data.map(function(r) {
           return {
             docNo: r.doc_no,
@@ -783,7 +783,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
   var drawingBuyer = false, drawingSeller = false;
   var lxB = 0, lyB = 0, lxS = 0, lyS = 0;
 
-  try { var s = localStorage.getItem('mbp_v5'); if (s) records = JSON.parse(s); } catch(e) {}
+  // Records loaded from Supabase on login - don't use localStorage as source of truth
+  // try { var s = localStorage.getItem('mbp_v5'); if (s) records = JSON.parse(s); } catch(e) {}
 
   // ===== HELPERS =====
   function el(id) { return document.getElementById(id); }
