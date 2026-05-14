@@ -690,26 +690,54 @@ input:checked+.tslider:before{transform:translateX(18px)}
     }
   }
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVkdWZjam5jYnFoZnl6bGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTA3OTYsImV4cCI6MjA5MzcyNjc5Nn0.XXDAEnioT5x2ukUJ_3MwvvrNNJqR9l1SKxii6hZOZxE';
-  var VISION_API_KEY = 'AIzaSyD0gwC-MYloblfvbIl_oLcJLLdgUJZw1Nw';
+  var CLAUDE_API_KEY = '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';
 
 function scanIDCard(base64Image) {
   var base64Data = base64Image.split(',')[1];
+  var mediaType = base64Image.split(';')[0].split(':')[1] || 'image/jpeg';
   showLoading('กำลังอ่านข้อมูลบัตร...');
-  fetch('https://vision.googleapis.com/v1/images:annotate?key=' + VISION_API_KEY, {
+  fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
     body: JSON.stringify({
-      requests: [{
-        image: { content: base64Data },
-        features: [{ type: 'TEXT_DETECTION', maxResults: 1 }]
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [{
+          type: 'image',
+          source: { type: 'base64', media_type: mediaType, data: base64Data }
+        }, {
+          type: 'text',
+          text: 'นี่คือรูปบัตรประชาชนไทย กรุณาอ่านและส่งกลับเป็น JSON เท่านั้น ไม่ต้องมีข้อความอื่น รูปแบบ: {"name":"ชื่อ-นามสกุล","idno":"เลข13หลัก","address":"ที่อยู่"}'
+        }]
       }]
     })
   }).then(function(res) { return res.json(); })
   .then(function(data) {
     hideLoading();
-    var text = data.responses[0].fullTextAnnotation
-      ? data.responses[0].fullTextAnnotation.text : '';
-    parseIDCard(text);
+    try {
+      var text = data.content[0].text;
+      var clean = text.replace(/```json|```/g, '').trim();
+      var parsed = JSON.parse(clean);
+      if (parsed.name) { el('c_name').value = parsed.name; el('id_name').value = parsed.name; }
+      if (parsed.idno) { el('c_id').value = parsed.idno; el('id_idno').value = parsed.idno; }
+      if (parsed.address) { el('c_addr').value = parsed.address; el('id_addr').value = parsed.address; }
+      var filled = [parsed.name, parsed.idno, parsed.address].filter(Boolean).length;
+      if (filled > 0) {
+        toast('อ่านบัตรสำเร็จ กรุณาตรวจสอบข้อมูล', 'ok');
+        el('idFormWrap').style.display = 'block';
+      } else {
+        toast('อ่านไม่ได้ กรุณากรอกเอง', 'err');
+      }
+    } catch(e) {
+      console.error('Parse error:', e);
+      toast('อ่านไม่ได้ กรุณากรอกเอง', 'err');
+    }
   }).catch(function(err) {
     hideLoading();
     toast('อ่านบัตรไม่สำเร็จ', 'err');
