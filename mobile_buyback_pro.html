@@ -690,6 +690,53 @@ input:checked+.tslider:before{transform:translateX(18px)}
     }
   }
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVkdWZjam5jYnFoZnl6bGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTA3OTYsImV4cCI6MjA5MzcyNjc5Nn0.XXDAEnioT5x2ukUJ_3MwvvrNNJqR9l1SKxii6hZOZxE';
+  var VISION_API_KEY = 'AIzaSyDXSz0VC50cqND0b4LHuKiTEPMco2pGjn8';
+
+function scanIDCard(base64Image) {
+  var base64Data = base64Image.split(',')[1];
+  showLoading('กำลังอ่านข้อมูลบัตร...');
+  fetch('https://vision.googleapis.com/v1/images:annotate?key=' + VISION_API_KEY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      requests: [{
+        image: { content: base64Data },
+        features: [{ type: 'TEXT_DETECTION', maxResults: 1 }]
+      }]
+    })
+  }).then(function(res) { return res.json(); })
+  .then(function(data) {
+    hideLoading();
+    var text = data.responses[0].fullTextAnnotation
+      ? data.responses[0].fullTextAnnotation.text : '';
+    parseIDCard(text);
+  }).catch(function(err) {
+    hideLoading();
+    toast('อ่านบัตรไม่สำเร็จ', 'err');
+    console.error(err);
+  });
+}
+
+function parseIDCard(text) {
+  var lines = text.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+  var idMatch = text.match(/\d[\s-]?\d[\s-]?\d[\s-]?\d[\s-]?\d[\s-]?\d[\s-]?\d[\s-]?\d[\s-]?\d[\s-]?\d[\s-]?\d[\s-]?\d[\s-]?\d/);
+  var idNo = idMatch ? idMatch[0].replace(/[\s-]/g, '') : '';
+  var nameLine = lines.find(function(l) {
+    return l.match(/^(นาย|นาง|นางสาว|ด\.ช\.|ด\.ญ\.)/);
+  }) || '';
+  var addrIdx = lines.findIndex(function(l) { return l.includes('ที่อยู่') || l.includes('Address'); });
+  var addr = addrIdx >= 0 ? lines.slice(addrIdx + 1, addrIdx + 4).join(' ') : '';
+  if (idNo) { el('c_id').value = idNo; el('id_idno').value = idNo; }
+  if (nameLine) { el('c_name').value = nameLine; el('id_name').value = nameLine; }
+  if (addr) { el('c_addr').value = addr; el('id_addr').value = addr; }
+  var filled = [idNo, nameLine, addr].filter(Boolean).length;
+  if (filled > 0) {
+    toast('อ่านบัตรสำเร็จ กรุณาตรวจสอบข้อมูล', 'ok');
+    el('idFormWrap').style.display = 'block';
+  } else {
+    toast('อ่านไม่ได้ กรุณากรอกเอง', 'err');
+  }
+}
 
   // ===== GOOGLE APPS SCRIPT CONFIG =====
   var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzT9ZHIWeTIhAUbwFFst68T-8ktUQel0jDohUYrW19by3H0X2wVpjlCwa7qU44wHTA/exec';
@@ -1381,7 +1428,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
       el('previewId').src = e.target.result;
       el('previewId').style.display = 'block';
       el('idFormWrap').style.display = 'block';
-      toast('อัปโหลดสำเร็จ กรุณาตรวจสอบข้อมูล', 'ok');
+      scanIDCard(e.target.result);
     };
     r.readAsDataURL(file);
   }
