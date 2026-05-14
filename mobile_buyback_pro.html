@@ -213,7 +213,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
 <div class="header">
   <div class="header-top">
     <div class="brand">
-      <div <div class="brand-logo" id="appIcon" style="background:transparent;width:auto;height:auto;border-radius:0"><div id="brandName" style="font-size:15px;font-weight:800;color:#FFD700;letter-spacing:.5px">ขายไอโฟน.com</div></div>
+      <div class="brand-logo" id="appIcon" style="background:transparent;width:auto;height:auto;border-radius:0"><div id="brandName" style="font-size:15px;font-weight:800;color:#FFD700;letter-spacing:.5px">ขายไอโฟน.com</div></div>
       <div>
         <div class="brand-sub" id="brandSub">ระบบรับซื้ออุปกรณ์มือสอง</div>
       </div>
@@ -223,7 +223,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
       <button class="logout-btn" type="button" id="btnLogout">ออก</button>
     </div>
   </div>
-  <div style="padding:2px 16px 8px"><div class="doc-badge" id="docBadge">--</div></div>
+  <div style="padding:2px 16px 8px" id="docBadgeWrap" style="display:none"><div class="doc-badge" id="docBadge">--</div></div>
   <div class="nav-tabs">
     <button class="nav-tab active" type="button" id="nt-form">ทำรายการ</button>
     <button class="nav-tab hidden" type="button" id="nt-dash">Dashboard</button>
@@ -586,6 +586,16 @@ input:checked+.tslider:before{transform:translateX(18px)}
 
 <script>
 (function() {
+  // ===== SECURITY =====
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   // ===== STATE =====
   var currentRole = '';
   var step = 1;
@@ -619,6 +629,18 @@ input:checked+.tslider:before{transform:translateX(18px)}
     });
   }
 
+  // ===== SECURITY =====
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  var isGenerating = false;
+
   // ===== SUPABASE CONFIG =====
   var SUPABASE_URL = 'https://tceudufcjncbqhfyzlic.supabase.co';
 
@@ -644,6 +666,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
     }
   };
   var currentShop = localStorage.getItem('mbp_shop') || 'khaiphone';
+  var isGenerating = false;
 
   function getShop() { return SHOPS[currentShop]; }
 
@@ -677,16 +700,22 @@ input:checked+.tslider:before{transform:translateX(18px)}
     
     // Create hidden iframe to render HTML
     renderHtmlToPdfBase64(contractHtml, function(contractPdfBase64) {
+      if (!contractPdfBase64) { toast('สร้าง PDF ไม่สำเร็จ', 'err'); return; }
       renderHtmlToPdfBase64(receiptHtml, function(receiptPdfBase64) {
+        if (!receiptPdfBase64) { toast('สร้าง PDF ไม่สำเร็จ', 'err'); return; }
         // Send both PDFs to Apps Script
+        if (!contractPdfBase64 || !receiptPdfBase64) {
+          toast('สร้าง PDF ไม่สำเร็จ', 'err');
+          return;
+        }
         fetch(APPS_SCRIPT_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
             docNo: docNo,
             shopName: shopName || 'Buyback Records',
-            contractPdf: contractPdfBase64,
-            receiptPdf: receiptPdfBase64
+            contractPdf: contractPdfBase64 || '',
+            receiptPdf: receiptPdfBase64 || ''
           })
         }).then(function(res) { return res.json(); })
         .then(function(data) {
@@ -722,7 +751,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
       var body = iframe.contentDocument.body;
       var A4_WIDTH_PX = 740;
       html2canvas(body, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -731,7 +760,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
         scrollX: 0,
         scrollY: 0
       }).then(function(canvas) {
-        var imgData = canvas.toDataURL('image/jpeg', 0.92);
+        var imgData = canvas.toDataURL('image/jpeg', 0.75);
         var pdf = new window.jspdf.jsPDF({
           orientation: 'portrait',
           unit: 'mm',
@@ -763,8 +792,9 @@ input:checked+.tslider:before{transform:translateX(18px)}
             tempCanvas.height = srcH;
             var ctx = tempCanvas.getContext('2d');
             ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
-            var sliceData = tempCanvas.toDataURL('image/jpeg', 0.92);
+            var sliceData = tempCanvas.toDataURL('image/jpeg', 0.75);
             pdf.addImage(sliceData, 'JPEG', margin, margin, printW, sliceH);
+            tempCanvas.width = 0; tempCanvas.height = 0;
           }
         }
         
@@ -782,57 +812,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
   // ===== GOOGLE DRIVE CONFIG (OAuth - legacy) =====
   var GDRIVE_CLIENT_ID = '364110486621-611d9i0sq4l3i311p8sd00j09qbf9vji.apps.googleusercontent.com';
   var GDRIVE_SCOPES = 'https://www.googleapis.com/auth/drive.file';
-  var gdriveToken = null;
-  var gdriveConnected = false;
 
-  function initGoogleDrive() {
-    var script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.onload = function() {
-      google.accounts.oauth2.initTokenClient({
-        client_id: GDRIVE_CLIENT_ID,
-        scope: GDRIVE_SCOPES,
-        callback: function(resp) {
-          if (resp.access_token) {
-            gdriveToken = resp.access_token;
-            gdriveConnected = true;
-            el('driveStatus').textContent = 'Google Drive: เชื่อมต่อแล้ว ✅';
-            el('driveStatus').style.color = 'var(--green)';
-            el('btnConnectDrive').textContent = 'เชื่อมต่อแล้ว ✅';
-            el('btnConnectDrive').style.background = 'var(--green)';
-            toast('เชื่อมต่อ Google Drive แล้ว', 'ok');
-          }
-        }
-      });
-      window._tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: GDRIVE_CLIENT_ID,
-        scope: GDRIVE_SCOPES,
-        callback: function(resp) {
-          if (resp.access_token) {
-            gdriveToken = resp.access_token;
-            gdriveConnected = true;
-            el('driveStatus').textContent = 'Google Drive: เชื่อมต่อแล้ว ✅';
-            el('driveStatus').style.color = 'var(--green)';
-            el('btnConnectDrive').textContent = 'เชื่อมต่อแล้ว ✅';
-            el('btnConnectDrive').style.background = 'var(--green)';
-            toast('เชื่อมต่อ Google Drive แล้ว', 'ok');
-          }
-        }
-      });
-    };
-    document.head.appendChild(script);
-  }
-
-  function connectDrive() {
-    if (window._tokenClient) {
-      window._tokenClient.requestAccessToken();
-    } else {
-      toast('กำลังโหลด Google API...', '');
-      setTimeout(function() {
-        if (window._tokenClient) window._tokenClient.requestAccessToken();
-      }, 2000);
-    }
-  }
 
   function uploadToDrive(htmlContent, filename, docNo) {
     if (!gdriveToken) { toast('กรุณาเชื่อมต่อ Google Drive ก่อน', 'err'); return; }
@@ -1173,7 +1153,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
     el('mainApp').style.display = 'none';
     el('loginScreen').style.display = 'flex';
     backToRoles();
-    el('docBadge').textContent = '--';
+    el('docBadge').textContent = '--'; el('docBadgeWrap').style.display = 'none';
   }
 
   // ===== CANVASES =====
@@ -1329,6 +1309,9 @@ input:checked+.tslider:before{transform:translateX(18px)}
   }
 
   function validate(s) {
+    if (s === 1) {
+      if (!el('pdpaConsent').checked) { toast('กรุณาให้ลูกค้ายินยอม PDPA ก่อน', 'err'); return false; }
+    }
     if (s === 2) {
       if (!val('c_name')) { toast('กรุณากรอกชื่อผู้ขาย', 'err'); return false; }
       if (!val('c_id')) { toast('กรุณากรอกเลขบัตร ปชช.', 'err'); return false; }
@@ -1429,10 +1412,12 @@ input:checked+.tslider:before{transform:translateX(18px)}
   }
 
   function generateDoc() {
+    if (isGenerating) { toast('กำลังสร้างเอกสารอยู่ กรุณารอ...', 'err'); return; }
     if (!sigBuyOK) { toast('กรุณายืนยันลายเซ็นผู้ขายก่อน', 'err'); return; }
     if (!sigSelOK) { toast('กรุณายืนยันลายเซ็นพนักงานก่อน', 'err'); return; }
+    isGenerating = true;
     showLoading('กำลังออกเอกสาร...');
-    setTimeout(function() { buildDoc(); hideLoading(); el('genBtnWrap').style.display = 'none'; el('docWrap').style.display = 'block';
+    setTimeout(function() { buildDoc(); hideLoading(); isGenerating = false; el('genBtnWrap').style.display = 'none'; el('docWrap').style.display = 'block';
     // Auto save to Google Drive via Apps Script
     if (window._contractHTML) {
       var fLink2 = '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">';
@@ -1446,22 +1431,22 @@ input:checked+.tslider:before{transform:translateX(18px)}
 
   function buildDoc() {
     var docNo = getDocNo();
-    el('docBadge').textContent = docNo;
+    el('docBadge').textContent = docNo; el('docBadgeWrap').style.display = 'block';
     var now = new Date();
     var pdate = el('p_date').value;
     var dateStr = pdate ? new Date(pdate).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }) : now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
     var timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-    var cName = val('c_name') || '-';
-    var cId = val('c_id') || '-';
-    var cPhone = val('c_phone') || '-';
-    var cAddr = val('c_addr') || '-';
+    var cName = esc(val('c_name') || '-');
+    var cId = esc(val('c_id') || '-');
+    var cPhone = esc(val('c_phone') || '-');
+    var cAddr = esc(val('c_addr') || '-');
     var cDob = el('c_dob').value || '-';
     var dBrand = el('d_brand').value || '';
-    var dModel = val('d_model') || '-';
+    var dModel = esc(val('d_model') || '-');
     var dStorage = el('d_storage').value;
-    var dColor = val('d_color') || '-';
-    var dSerial = val('d_serial') || '-';
-    var dImei = val('d_imei') || 'ไม่ระบุ';
+    var dColor = esc(val('d_color') || '-');
+    var dSerial = esc(val('d_serial') || '-');
+    var dImei = esc(val('d_imei') || 'ไม่ระบุ');
     var dOrigin = sc_origin === 'อื่นๆ' ? (val('d_origin_other') || 'อื่นๆ') : sc_origin;
     var dBatt = el('d_batt').value;
     var dIcloud = el('d_icloud').value;
@@ -1473,9 +1458,9 @@ input:checked+.tslider:before{transform:translateX(18px)}
     var repairDetail = repaired ? (val('d_repair') || 'ไม่ระบุ') : 'ไม่มีประวัติซ่อม';
     var funcProb = sc_func !== 'ปกติทุกฟังก์ชัน' ? (val('d_funcprob') || 'ไม่ระบุ') : '';
     var price = parseInt(el('p_amount').value) || 0;
-    var staff = val('p_staff') || '-';
+    var staff = esc(val('p_staff') || '-');
     var payTh = payM === 'cash' ? 'เงินสด' : 'โอนธนาคาร';
-    var bankInfo = payM === 'transfer' ? val('b_name') + ' | ธ.' + el('b_bank').value + ' | ' + val('b_acctno') : '--';
+    var bankInfo = payM === 'transfer' ? esc(val('b_name')) + ' | ธ.' + esc(el('b_bank').value) + ' | ' + esc(val('b_acctno')) : '--';
     var accs = [];
     [['acc_box','กล่อง'],['acc_cable','สายชาร์จ'],['acc_adapter','หัวชาร์จ'],['acc_case','เคส'],['acc_ear','หูฟัง'],['acc_film','ฟิล์มกันรอย']].forEach(function(x) {
       if (el(x[0]) && el(x[0]).checked) accs.push(x[1]);
@@ -1484,53 +1469,49 @@ input:checked+.tslider:before{transform:translateX(18px)}
     var sigBuyImg = canvBuyer.toDataURL('image/png');
     var sigSelImg = canvSeller.toDataURL('image/png');
     var pdpaOk = el('pdpaConsent').checked;
-    var deviceFull = (dBrand + ' ' + dModel + ' ' + dStorage + ' ' + dColor).trim();
-    var dNote = val('d_note') || '--';
+    var deviceFull = (dBrand + ' ' + esc(dModel) + ' ' + dStorage + ' ' + dColor).trim();
+    var dNote = esc(val('d_note') || '--');
 
     var newRecord = { docNo: docNo, date: dateStr, cName: cName, cId: cId, deviceFull: deviceFull, dSerial: dSerial, grade: grade, price: price, payMethod: payTh, staff: staff, timestamp: Date.now() };
     records.unshift(newRecord);
     try { localStorage.setItem('mbp_v5', JSON.stringify(records.slice(0, 500))); } catch(e) {}
     saveToSupabase(newRecord);
-    // Auto upload to Google Drive if connected
-    if (gdriveConnected) {
-      var fontLink2 = '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">';
-      // Will be called after buildDoc sets window._contractHTML
-    }
+
 
     var idSec = (pdpaOk && idPhotoData) ? '<div style="margin:6px 0"><div style="font-size:9.5px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">สำเนาบัตรประชาชน (ลูกค้ายินยอม PDPA)</div><img src="' + idPhotoData + '" style="max-width:200px;max-height:120px;object-fit:cover;border:1px solid #ddd;border-radius:4px"></div>' : '';
     var pdpaTxt = pdpaOk ? 'ลูกค้ายินยอมให้จัดเก็บรูปบัตร (PDPA 2562)' : 'ไม่ได้เก็บรูปบัตร -- ใช้ข้อมูลที่กรอกแทน';
     var slipSec = (payM === 'transfer' && slipData) ? '<div style="margin:6px 0"><div style="font-size:9.5px;color:#999;margin-bottom:3px">หลักฐานโอนเงิน</div><img src="' + slipData + '" style="max-width:140px;max-height:140px;object-fit:contain;border:1px solid #ddd;border-radius:4px"></div>' : '';
     var gradeCls = { A: 'background:#f0fdf4;color:#15803d;border:1px solid #86efac', B: 'background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd', C: 'background:#fff7ed;color:#c2410c;border:1px solid #fdba74', D: 'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5' };
     var gradeBadge = '<span style="' + gradeCls[grade] + ';display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700">เกรด ' + grade + '</span>';
-    var bankRow = payM === 'transfer' ? '<div style="display:flex;flex-direction:column;margin-bottom:5px"><span style="font-size:9.5px;color:#999;text-transform:uppercase;letter-spacing:.5px">ข้อมูลบัญชีผู้รับเงิน</span><span style="font-size:11px;font-weight:500;border-bottom:1px solid #eee;padding-bottom:2px">' + bankInfo + '</span></div>' : '';
+    var bankRow = payM === 'transfer' ? '<div style="display:flex;flex-direction:column;margin-bottom:5px"><span style="font-size:9.5px;color:#999;text-transform:uppercase;letter-spacing:.5px">ข้อมูลบัญชีผู้รับเงิน</span><span style="font-size:11px;font-weight:500;border-bottom:1px solid #eee;padding-bottom:2px">' + esc(bankInfo) + '</span></div>' : '';
 
     var css = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Sarabun",sans-serif;max-width:720px;margin:0 auto;font-size:12px;color:#222;line-height:1.7}.lh{padding:16px 20px;display:flex;justify-content:space-between;align-items:flex-start}.body{padding:14px 20px}.sec{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin:12px 0 7px;padding-bottom:3px;border-bottom:1.5px solid #eee}.grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 15px}.f{display:flex;flex-direction:column;margin-bottom:5px}.fl{font-size:9.5px;color:#999;text-transform:uppercase;letter-spacing:.5px}.fv{font-size:12px;font-weight:500;border-bottom:1px solid #eee;padding-bottom:2px;min-height:18px;margin-top:1px}.terms{background:#fafafa;border:1px solid #eee;border-radius:5px;padding:9px 11px;font-size:11px;color:#444;line-height:1.9;margin:10px 0}.sig2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px;padding-top:10px;border-top:1px solid #eee;page-break-inside:avoid}.sb{text-align:center}.sa{height:60px;border-bottom:1px solid #bbb;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;margin-bottom:4px}.sl{font-size:10px;color:#555;line-height:1.4}.note{background:#f0fdf4;border:1px solid #86efac;border-radius:4px;padding:6px 10px;font-size:10px;color:#15803d;margin-top:8px;line-height:1.5}.foot{background:#f5f5f5;border-top:1px solid #eee;padding:7px 20px;font-size:10px;color:#aaa;display:flex;justify-content:space-between}.no-break{page-break-inside:avoid}';
 
     function fRow(label, value) {
-      return '<div class="f"><span class="fl">' + label + '</span><span class="fv">' + value + '</span></div>';
+      return '<div class="f"><span class="fl">' + esc(label) + '</span><span class="fv">' + esc(String(value || '')) + '</span></div>';
     }
 
     var contractHTML = '<div class="lh" style="background:#1a1a2e"><div><div style="font-size:15px;font-weight:700;color:#fff">สัญญาซื้อขายโทรศัพท์มือถือ</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">' + getShop().name + ' | ' + getShop().address + ' | โทร ' + getShop().phone + ' LINE: ' + getShop().line + '</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#c9a84c">CONTRACT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + ' ' + timeStr + ' น.</div></div></div>';
     contractHTML += '<div class="body">';
     contractHTML += '<div style="page-break-inside:avoid"><div class="sec">§1 ข้อมูลผู้ขาย</div>' + idSec;
-    contractHTML += '<div class="grid">' + fRow('ชื่อ-นามสกุล', cName) + fRow('เลขบัตรประชาชน', cId) + fRow('วันเกิด', cDob) + fRow('เบอร์โทรศัพท์', cPhone) + '<div class="f" style="grid-column:1/-1"><span class="fl">ที่อยู่</span><span class="fv">' + cAddr + '</span></div></div>';
+    contractHTML += '<div class="grid">' + fRow('ชื่อ-นามสกุล', cName) + fRow('เลขบัตรประชาชน', cId) + fRow('วันเกิด', cDob) + fRow('เบอร์โทรศัพท์', cPhone) + '<div class="f" style="grid-column:1/-1"><span class="fl">ที่อยู่</span><span class="fv">' + esc(cAddr) + '</span></div></div>';
     contractHTML += '<div style="font-size:10px;color:#888;font-style:italic;margin-top:2px">' + pdpaTxt + '</div>';
     contractHTML += '</div><div style="page-break-inside:avoid"><div class="sec">§2 รายละเอียดสินค้า</div>';
-    contractHTML += '<div class="grid">' + fRow('ยี่ห้อ / รุ่น', dBrand + ' ' + dModel) + fRow('แหล่งที่มา', dOrigin) + fRow('ความจุ / สี', dStorage + ' / ' + dColor) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + dSerial + '</span></div>' + '<div class="f"><span class="fl">IMEI</span><span class="fv" style="font-family:monospace">' + dImei + '</span></div>' + fRow('เกรดสภาพ', gradeBadge) + fRow('สภาพหน้าจอ', sc_screen) + fRow('สภาพบอดี้', sc_body) + fRow('ฟังก์ชัน', sc_func + (funcProb ? ' - ' + funcProb : '')) + fRow('แบตเตอรี่', dBatt) + fRow('Apple ID / iCloud', dIcloud) + fRow('สถานะประกัน', warrantyFull) + fRow('ประวัติซ่อม', repairDetail) + fRow('อุปกรณ์ที่รับมาด้วย', accStr) + '<div class="f" style="grid-column:1/-1"><span class="fl">หมายเหตุ</span><span class="fv">' + dNote + '</span></div></div>';
+    contractHTML += '<div class="grid">' + fRow('ยี่ห้อ / รุ่น', dBrand + ' ' + dModel) + fRow('แหล่งที่มา', dOrigin) + fRow('ความจุ / สี', dStorage + ' / ' + dColor) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + esc(dSerial) + '</span></div>' + '<div class="f"><span class="fl">IMEI</span><span class="fv" style="font-family:monospace">' + esc(dImei) + '</span></div>' + fRow('เกรดสภาพ', gradeBadge) + fRow('สภาพหน้าจอ', sc_screen) + fRow('สภาพบอดี้', sc_body) + fRow('ฟังก์ชัน', sc_func + (funcProb ? ' - ' + funcProb : '')) + fRow('แบตเตอรี่', dBatt) + fRow('Apple ID / iCloud', dIcloud) + fRow('สถานะประกัน', warrantyFull) + fRow('ประวัติซ่อม', repairDetail) + fRow('อุปกรณ์ที่รับมาด้วย', accStr) + '<div class="f" style="grid-column:1/-1"><span class="fl">หมายเหตุ</span><span class="fv">' + esc(dNote) + '</span></div></div>';
     contractHTML += '<div class="sec">§3 ราคาและการชำระเงิน</div>';
     contractHTML += '<div class="grid"><div class="f"><span class="fl">ราคาที่ตกลง</span><span class="fv" style="font-size:15px;font-weight:700">' + price.toLocaleString('th-TH') + ' บาทถ้วน</span></div>' + fRow('วิธีชำระ', payTh) + bankRow + fRow('วันที่ทำรายการ', dateStr) + fRow('พนักงาน', staff) + fRow('ผู้ซื้อ (ร้าน)', getShop().name) + fRow('ที่อยู่ผู้ซื้อ', getShop().address) + fRow('เบอร์โทร / LINE', getShop().phone + ' / ' + getShop().line) + '</div></div>' + slipSec;
     contractHTML += '<div class="sec">§4 ข้อกำหนดและเงื่อนไข</div>';
     contractHTML += '<div class="terms">1. ผู้ขายรับรองว่าอุปกรณ์เป็นทรัพย์สินของตนโดยชอบด้วยกฎหมาย ไม่ได้มาจากการลักทรัพย์หรือผิดกฎหมายใดๆ (ป.อ. มาตรา 335, 357)<br>2. ผู้ขายยินยอมโอนกรรมสิทธิ์ทั้งสิ้นให้แก่ผู้ซื้อโดยเด็ดขาด (ป.พ.พ. มาตรา 453-459)<br>3. ผู้ขายรับทราบสภาพสินค้าตามที่ระบุ ยินยอมรับราคาโดยไม่มีข้อโต้แย้ง<br>4. ผู้ขายยินยอมให้เก็บข้อมูลตาม PDPA พ.ศ. 2562<br>5. สัญญานี้มีผลสมบูรณ์ตาม ป.พ.พ. มาตรา 453 โดยไม่ต้องมีพยาน</div>';
-    contractHTML += '<div class="sig2"><div class="sb"><div class="sa"><img src="' + sigBuyImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ขาย</strong><br>' + cName + '<br>เลขบัตร: ' + cId + '</div></div><div class="sb"><div class="sa"><img src="' + sigSelImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ซื้อ / พนักงาน</strong><br>' + staff + '</div></div></div>';
+    contractHTML += '<div class="sig2"><div class="sb"><div class="sa"><img src="' + sigBuyImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ขาย</strong><br>' + esc(cName) + '<br>เลขบัตร: ' + esc(cId) + '</div></div><div class="sb"><div class="sa"><img src="' + sigSelImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ซื้อ / พนักงาน</strong><br>' + esc(staff) + '</div></div></div>';
     contractHTML += '<div class="note">สัญญาซื้อขายนี้สมบูรณ์ตาม ป.พ.พ. มาตรา 453 ทำต่อหน้ากัน ณ วันที่ ' + dateStr + ' เวลา ' + timeStr + ' น.</div>';
     contractHTML += '</div><div class="foot"><span>Mobile Buyback Pro - ' + docNo + '</span><span>เอกสารนี้มีผลผูกพันทางกฎหมาย</span></div>';
 
     var receiptHTML = '<div class="lh" style="background:#14532d"><div><div style="font-size:15px;font-weight:700;color:#fff">ใบสำคัญรับเงิน</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">' + getShop().name + ' | ' + getShop().address + ' | โทร ' + getShop().phone + ' LINE: ' + getShop().line + '</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#86efac">RECEIPT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '-R</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + '</div></div></div>';
-    receiptHTML += '<div class="body"><div class="sec">ข้อมูลการรับเงิน</div><div class="grid">' + '<div class="f"><span class="fl">ผู้รับเงิน (ผู้ขาย)</span><span class="fv" style="font-size:14px;font-weight:700">' + cName + '</span></div>' + fRow('เลขบัตรประชาชน', cId) + fRow('สินค้าที่ขาย', deviceFull) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + dSerial + '</span></div></div>';
+    receiptHTML += '<div class="body"><div class="sec">ข้อมูลการรับเงิน</div><div class="grid">' + '<div class="f"><span class="fl">ผู้รับเงิน (ผู้ขาย)</span><span class="fv" style="font-size:14px;font-weight:700">' + esc(cName) + '</span></div>' + fRow('เลขบัตรประชาชน', cId) + fRow('สินค้าที่ขาย', deviceFull) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + esc(dSerial) + '</span></div></div>';
     receiptHTML += '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:5px;padding:12px;text-align:center;margin:10px 0"><div style="font-size:10px;color:#555;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">จำนวนเงินที่ได้รับ</div><div style="font-size:26px;font-weight:800;color:#15803d;font-family:monospace">' + price.toLocaleString('th-TH') + ' บาทถ้วน</div><div style="font-size:11px;color:#555;margin-top:3px">ชำระโดย: ' + payTh + (payM === 'transfer' ? ' - ' + bankInfo : '') + '</div></div>';
-    receiptHTML += '<div style="font-size:11px;color:#555;line-height:1.9;padding:7px;background:#fafafa;border-radius:4px;margin:7px 0">ข้าพเจ้าขอรับรองว่าได้รับเงินจำนวนดังกล่าวจาก <strong>' + staff + '</strong> เป็นค่าขายโทรศัพท์มือถือตามสัญญาเลขที่ ' + docNo + ' เรียบร้อยแล้ว โดยสมัครใจ ทำ ณ วันที่ ' + dateStr + ' เวลา ' + timeStr + ' น.</div>';
+    receiptHTML += '<div style="font-size:11px;color:#555;line-height:1.9;padding:7px;background:#fafafa;border-radius:4px;margin:7px 0">ข้าพเจ้าขอรับรองว่าได้รับเงินจำนวนดังกล่าวจาก <strong>' + esc(staff) + '</strong> เป็นค่าขายโทรศัพท์มือถือตามสัญญาเลขที่ ' + docNo + ' เรียบร้อยแล้ว โดยสมัครใจ ทำ ณ วันที่ ' + dateStr + ' เวลา ' + timeStr + ' น.</div>';
     receiptHTML += slipSec;
-    receiptHTML += '<div class="sig2"><div class="sb"><div class="sa"><img src="' + sigBuyImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้รับเงิน</strong><br>' + cName + '</div></div><div class="sb"><div class="sa"><img src="' + sigSelImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้จ่ายเงิน</strong><br>' + staff + '</div></div></div>';
+    receiptHTML += '<div class="sig2"><div class="sb"><div class="sa"><img src="' + sigBuyImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้รับเงิน</strong><br>' + esc(cName) + '</div></div><div class="sb"><div class="sa"><img src="' + sigSelImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้จ่ายเงิน</strong><br>' + esc(staff) + '</div></div></div>';
     receiptHTML += '<div class="note">ใบรับเงินสมบูรณ์โดยไม่ต้องมีพยาน - ' + docNo + '-R - ' + dateStr + '</div></div>';
     receiptHTML += '<div class="foot"><span>Mobile Buyback Pro - ' + docNo + '-R</span><span>' + dateStr + ' ' + timeStr + ' น.</span></div>';
 
@@ -1681,8 +1662,10 @@ input:checked+.tslider:before{transform:translateX(18px)}
     // Reset doc
     el('docWrap').style.display = 'none';
     el('genBtnWrap').style.display = 'block';
-    el('docBadge').textContent = '--';
+    el('docBadge').textContent = '--'; el('docBadgeWrap').style.display = 'none';
 
+    // Reset date to today
+    el('p_date').value = new Date().toISOString().split('T')[0];
     // Go to step 3 (device info) - skip customer info
     gotoStep(3);
     toast('กรอกข้อมูลสินค้าเครื่องถัดไปได้เลย', 'ok');
@@ -1720,7 +1703,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
     clearCanvas('buy'); clearCanvas('sel');
     el('sigBuyOk').style.display = 'none'; el('sigSelOk').style.display = 'none';
     el('docWrap').style.display = 'none'; el('genBtnWrap').style.display = 'block';
-    el('docBadge').textContent = '--'; el('pdpaConsent').checked = false;
+    el('docBadge').textContent = '--'; el('docBadgeWrap').style.display = 'none'; el('pdpaConsent').checked = false;
     el('idSub').textContent = 'ต้องให้ลูกค้ายินยอมก่อน'; el('scanHint').textContent = 'ต้องให้ลูกค้ายินยอมก่อน';
     el('idFile').disabled = true;
     el('p_date').value = new Date().toISOString().split('T')[0];
@@ -1895,9 +1878,6 @@ input:checked+.tslider:before{transform:translateX(18px)}
 
     // Settings
     el('btnChangePin').addEventListener('click', changePin);
-    el('btnConnectDrive').addEventListener('click', connectDrive);
-    // Init Google Drive API
-    initGoogleDrive();
     // Init shop selection
     selectShop(currentShop);
     // Load PIN from Supabase
