@@ -156,8 +156,17 @@ input:checked+.tslider:before{transform:translateX(18px)}
 <body>
 <div id="loginScreen">
   <div class="login-logo">M</div>
-  <div class="login-title">ขายไอโฟน.com</div>
+  <div class="login-title" id="loginTitle">ขายไอโฟน.com</div>
   <div class="login-sub">ระบบรับซื้ออุปกรณ์มือสอง | The Plant รังสิต</div>
+
+  <!-- Shop Selector -->
+  <div style="width:100%;padding:0 20px;margin:16px 0 4px;box-sizing:border-box">
+    <select id="shopDropdown" onchange="selectShop(this.value)" style="width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22rgba(255,255,255,0.6)%22 d=%22M6 8L1 3h10z%22/></svg>');background-repeat:no-repeat;background-position:right 14px center;text-align:center">
+      <option value="khaiphone" style="background:#1a1a2e;color:#fff">🏪 ขายไอโฟน.com</option>
+      <option value="trademobie" style="background:#1a1a2e;color:#fff">🏪 Trademobie.com</option>
+    </select>
+  </div>
+
   <div class="role-buttons">
     <button class="role-btn" id="roleStaff" type="button">
       <div class="role-btn-icon">&#128100;</div>
@@ -210,8 +219,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
     <div class="brand">
       <div class="brand-logo">M</div>
       <div>
-        <div class="brand-name">ขายไอโฟน.com</div>
-        <div class="brand-sub">ระบบรับซื้ออุปกรณ์มือสอง</div>
+        <div class="brand-name" id="brandName">ขายไอโฟน.com</div>
+        <div class="brand-sub" id="brandSub">ระบบรับซื้ออุปกรณ์มือสอง</div>
       </div>
     </div>
     <div class="header-right">
@@ -596,10 +605,63 @@ input:checked+.tslider:before{transform:translateX(18px)}
   var idPhotoData = '';
   var docCounter = 1;
   var records = [];
-  var ownerPin = localStorage.getItem('mbp_pin') || '1234';
+  var ownerPin = '1234'; // Will be loaded from Supabase
+
+  function loadPinFromSupabase() {
+    fetch(SUPABASE_URL + '/rest/v1/settings?key=eq.owner_pin&select=value', {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      }
+    }).then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (Array.isArray(data) && data.length > 0 && data[0].value) {
+        ownerPin = data[0].value;
+      }
+    }).catch(function(err) {
+      console.error('Load PIN error:', err);
+    });
+  }
 
   // ===== SUPABASE CONFIG =====
   var SUPABASE_URL = 'https://tceudufcjncbqhfyzlic.supabase.co';
+
+  // ===== SHOP CONFIG =====
+  var SHOPS = {
+    khaiphone: {
+      name: 'ขายไอโฟน.com',
+      address: 'The Plant วงแหวน-รังสิต เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี 12130',
+      phone: '095-553-5167',
+      line: '@khaiphone',
+      sub: 'ระบบรับซื้ออุปกรณ์มือสอง'
+    },
+    trademobie: {
+      name: 'Trademobie.com',
+      address: 'The Plant วงแหวน-รังสิต เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี 12130',
+      phone: '095-553-5167',
+      line: '@trademobie',
+      sub: 'ระบบรับซื้ออุปกรณ์มือสอง'
+    }
+  };
+  var currentShop = localStorage.getItem('mbp_shop') || 'khaiphone';
+
+  function getShop() { return SHOPS[currentShop]; }
+
+  function selectShop(shopId) {
+    currentShop = shopId;
+    localStorage.setItem('mbp_shop', shopId);
+    var shop = SHOPS[shopId];
+    // Update header
+    if (el('brandName')) el('brandName').textContent = shop.name;
+    if (el('brandSub')) el('brandSub').textContent = shop.sub;
+    // Update label
+    if (el('shopCurrentLabel')) el('shopCurrentLabel').textContent = 'ร้านปัจจุบัน: ' + shop.name;
+    // Update buttons style
+    // Sync dropdown
+    if (el('shopDropdown')) el('shopDropdown').value = shopId;
+    // Update login title if exists
+    if (el('loginTitle')) el('loginTitle').textContent = shop.name;
+  }
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZXVkdWZjam5jYnFoZnl6bGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNTA3OTYsImV4cCI6MjA5MzcyNjc5Nn0.XXDAEnioT5x2ukUJ_3MwvvrNNJqR9l1SKxii6hZOZxE';
 
   // ===== GOOGLE APPS SCRIPT CONFIG =====
@@ -950,6 +1012,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
   }
   window.closeDetail = closeDetail;
   window.regenDoc = regenDoc;
+  window.selectShop = selectShop;
 
   function regenDoc(docNo) {
     var r = records.filter(function(x) { return x.docNo === docNo; })[0];
@@ -1037,7 +1100,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
   function pinDel() { pinInput = pinInput.slice(0, -1); updateDots(); }
 
   function pinEnter() {
-    if (pinInput === ownerPin) {
+    if (pinInput.trim() === ownerPin.trim()) {
       enterApp('owner');
     } else {
       el('pinError').textContent = 'PIN ไม่ถูกต้อง กรุณาลองใหม่';
@@ -1171,16 +1234,37 @@ input:checked+.tslider:before{transform:translateX(18px)}
     } else if (ctxSeller) {
       ctxSeller.fillStyle = '#f2f1ee'; ctxSeller.fillRect(0, 0, canvSeller.width, canvSeller.height);
       sigHasSel = false; sigSelOK = false; el('sigSelOk').style.display = 'none';
+      canvSeller.style.pointerEvents = 'auto'; canvSeller.style.opacity = '1'; canvSeller.style.border = '';
+      el('btnConfirmSeller').style.display = 'inline-flex'; el('btnClearSeller').textContent = 'ล้าง';
     }
   }
 
   function confirmSig(which) {
     if (which === 'buy') {
       if (!sigHasBuy) { toast('กรุณาเซ็นชื่อก่อน', 'err'); return; }
-      sigBuyOK = true; el('sigBuyOk').style.display = 'block'; toast('บันทึกลายเซ็นผู้ขายแล้ว', 'ok');
+      sigBuyOK = true;
+      el('sigBuyOk').style.display = 'block';
+      toast('บันทึกลายเซ็นผู้ขายแล้ว', 'ok');
+      if (canvBuyer) {
+        canvBuyer.style.pointerEvents = 'none';
+        canvBuyer.style.opacity = '0.85';
+        canvBuyer.style.border = '2px solid var(--green)';
+      }
+      el('btnConfirmBuyer').style.display = 'none';
+      el('btnClearBuyer').textContent = 'แก้ไข';
     } else {
       if (!sigHasSel) { toast('กรุณาเซ็นชื่อก่อน', 'err'); return; }
-      sigSelOK = true; el('sigSelOk').style.display = 'block'; toast('บันทึกลายเซ็นพนักงานแล้ว', 'ok');
+      sigSelOK = true;
+      el('sigSelOk').style.display = 'block';
+      toast('บันทึกลายเซ็นพนักงานแล้ว', 'ok');
+      // Lock seller canvas
+      if (canvSeller) {
+        canvSeller.style.pointerEvents = 'none';
+        canvSeller.style.opacity = '0.85';
+        canvSeller.style.border = '2px solid var(--green)';
+      }
+      el('btnConfirmSeller').style.display = 'none';
+      el('btnClearSeller').textContent = 'แก้ไข';
     }
   }
 
@@ -1405,7 +1489,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
       return '<div class="f"><span class="fl">' + label + '</span><span class="fv">' + value + '</span></div>';
     }
 
-    var contractHTML = '<div class="lh" style="background:#1a1a2e"><div><div style="font-size:15px;font-weight:700;color:#fff">สัญญาซื้อขายโทรศัพท์มือถือ</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">ขายไอโฟน.com | The Plant วงแหวน-รังสิต เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี | โทร 095-553-5167 LINE: @khaiphone</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#c9a84c">CONTRACT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + ' ' + timeStr + ' น.</div></div></div>';
+    var contractHTML = '<div class="lh" style="background:#1a1a2e"><div><div style="font-size:15px;font-weight:700;color:#fff">สัญญาซื้อขายโทรศัพท์มือถือ</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">' + getShop().name + ' | ' + getShop().address + ' | โทร ' + getShop().phone + ' LINE: ' + getShop().line + '</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#c9a84c">CONTRACT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + ' ' + timeStr + ' น.</div></div></div>';
     contractHTML += '<div class="body">';
     contractHTML += '<div style="page-break-inside:avoid"><div class="sec">§1 ข้อมูลผู้ขาย</div>' + idSec;
     contractHTML += '<div class="grid">' + fRow('ชื่อ-นามสกุล', cName) + fRow('เลขบัตรประชาชน', cId) + fRow('วันเกิด', cDob) + fRow('เบอร์โทรศัพท์', cPhone) + '<div class="f" style="grid-column:1/-1"><span class="fl">ที่อยู่</span><span class="fv">' + cAddr + '</span></div></div>';
@@ -1413,14 +1497,14 @@ input:checked+.tslider:before{transform:translateX(18px)}
     contractHTML += '</div><div style="page-break-inside:avoid"><div class="sec">§2 รายละเอียดสินค้า</div>';
     contractHTML += '<div class="grid">' + fRow('ยี่ห้อ / รุ่น', dBrand + ' ' + dModel) + fRow('แหล่งที่มา', dOrigin) + fRow('ความจุ / สี', dStorage + ' / ' + dColor) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + dSerial + '</span></div>' + '<div class="f"><span class="fl">IMEI</span><span class="fv" style="font-family:monospace">' + dImei + '</span></div>' + fRow('เกรดสภาพ', gradeBadge) + fRow('สภาพหน้าจอ', sc_screen) + fRow('สภาพบอดี้', sc_body) + fRow('ฟังก์ชัน', sc_func + (funcProb ? ' - ' + funcProb : '')) + fRow('แบตเตอรี่', dBatt) + fRow('Apple ID / iCloud', dIcloud) + fRow('สถานะประกัน', warrantyFull) + fRow('ประวัติซ่อม', repairDetail) + fRow('อุปกรณ์ที่รับมาด้วย', accStr) + '<div class="f" style="grid-column:1/-1"><span class="fl">หมายเหตุ</span><span class="fv">' + dNote + '</span></div></div>';
     contractHTML += '<div class="sec">§3 ราคาและการชำระเงิน</div>';
-    contractHTML += '<div class="grid"><div class="f"><span class="fl">ราคาที่ตกลง</span><span class="fv" style="font-size:15px;font-weight:700">' + price.toLocaleString('th-TH') + ' บาทถ้วน</span></div>' + fRow('วิธีชำระ', payTh) + bankRow + fRow('วันที่ทำรายการ', dateStr) + fRow('พนักงาน', staff) + fRow('ผู้ซื้อ (ร้าน)', 'ขายไอโฟน.com') + fRow('ที่อยู่ผู้ซื้อ', 'เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี 12130') + fRow('เบอร์โทร / LINE', '095-553-5167 / @khaiphone') + '</div></div>' + slipSec;
+    contractHTML += '<div class="grid"><div class="f"><span class="fl">ราคาที่ตกลง</span><span class="fv" style="font-size:15px;font-weight:700">' + price.toLocaleString('th-TH') + ' บาทถ้วน</span></div>' + fRow('วิธีชำระ', payTh) + bankRow + fRow('วันที่ทำรายการ', dateStr) + fRow('พนักงาน', staff) + fRow('ผู้ซื้อ (ร้าน)', getShop().name) + fRow('ที่อยู่ผู้ซื้อ', getShop().address) + fRow('เบอร์โทร / LINE', getShop().phone + ' / ' + getShop().line) + '</div></div>' + slipSec;
     contractHTML += '<div class="sec">§4 ข้อกำหนดและเงื่อนไข</div>';
     contractHTML += '<div class="terms">1. ผู้ขายรับรองว่าอุปกรณ์เป็นทรัพย์สินของตนโดยชอบด้วยกฎหมาย ไม่ได้มาจากการลักทรัพย์หรือผิดกฎหมายใดๆ (ป.อ. มาตรา 335, 357)<br>2. ผู้ขายยินยอมโอนกรรมสิทธิ์ทั้งสิ้นให้แก่ผู้ซื้อโดยเด็ดขาด (ป.พ.พ. มาตรา 453-459)<br>3. ผู้ขายรับทราบสภาพสินค้าตามที่ระบุ ยินยอมรับราคาโดยไม่มีข้อโต้แย้ง<br>4. ผู้ขายยินยอมให้เก็บข้อมูลตาม PDPA พ.ศ. 2562<br>5. สัญญานี้มีผลสมบูรณ์ตาม ป.พ.พ. มาตรา 453 โดยไม่ต้องมีพยาน</div>';
     contractHTML += '<div class="sig2"><div class="sb"><div class="sa"><img src="' + sigBuyImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ขาย</strong><br>' + cName + '<br>เลขบัตร: ' + cId + '</div></div><div class="sb"><div class="sa"><img src="' + sigSelImg + '" style="max-height:54px;max-width:100%;object-fit:contain"></div><div class="sl"><strong>ลายมือชื่อผู้ซื้อ / พนักงาน</strong><br>' + staff + '</div></div></div>';
     contractHTML += '<div class="note">สัญญาซื้อขายนี้สมบูรณ์ตาม ป.พ.พ. มาตรา 453 ทำต่อหน้ากัน ณ วันที่ ' + dateStr + ' เวลา ' + timeStr + ' น.</div>';
     contractHTML += '</div><div class="foot"><span>Mobile Buyback Pro - ' + docNo + '</span><span>เอกสารนี้มีผลผูกพันทางกฎหมาย</span></div>';
 
-    var receiptHTML = '<div class="lh" style="background:#14532d"><div><div style="font-size:15px;font-weight:700;color:#fff">ใบสำคัญรับเงิน</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">ขายไอโฟน.com | The Plant วงแหวน-รังสิต เลขที่ 81/59 ถ.รังสิต-นครนายก ต.รังสิต อ.ธัญบุรี จ.ปทุมธานี | โทร 095-553-5167 LINE: @khaiphone</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#86efac">RECEIPT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '-R</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + '</div></div></div>';
+    var receiptHTML = '<div class="lh" style="background:#14532d"><div><div style="font-size:15px;font-weight:700;color:#fff">ใบสำคัญรับเงิน</div><div style="font-size:10px;opacity:.65;color:#fff;line-height:1.5;margin-top:2px">' + getShop().name + ' | ' + getShop().address + ' | โทร ' + getShop().phone + ' LINE: ' + getShop().line + '</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;letter-spacing:.5px;color:#86efac">RECEIPT</div><div style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.8);margin-top:2px">' + docNo + '-R</div><div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">' + dateStr + '</div></div></div>';
     receiptHTML += '<div class="body"><div class="sec">ข้อมูลการรับเงิน</div><div class="grid">' + '<div class="f"><span class="fl">ผู้รับเงิน (ผู้ขาย)</span><span class="fv" style="font-size:14px;font-weight:700">' + cName + '</span></div>' + fRow('เลขบัตรประชาชน', cId) + fRow('สินค้าที่ขาย', deviceFull) + '<div class="f"><span class="fl">Serial Number</span><span class="fv" style="font-family:monospace">' + dSerial + '</span></div></div>';
     receiptHTML += '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:5px;padding:12px;text-align:center;margin:10px 0"><div style="font-size:10px;color:#555;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">จำนวนเงินที่ได้รับ</div><div style="font-size:26px;font-weight:800;color:#15803d;font-family:monospace">' + price.toLocaleString('th-TH') + ' บาทถ้วน</div><div style="font-size:11px;color:#555;margin-top:3px">ชำระโดย: ' + payTh + (payM === 'transfer' ? ' - ' + bankInfo : '') + '</div></div>';
     receiptHTML += '<div style="font-size:11px;color:#555;line-height:1.9;padding:7px;background:#fafafa;border-radius:4px;margin:7px 0">ข้าพเจ้าขอรับรองว่าได้รับเงินจำนวนดังกล่าวจาก <strong>' + staff + '</strong> เป็นค่าขายโทรศัพท์มือถือตามสัญญาเลขที่ ' + docNo + ' เรียบร้อยแล้ว โดยสมัครใจ ทำ ณ วันที่ ' + dateStr + ' เวลา ' + timeStr + ' น.</div>';
@@ -1572,8 +1656,27 @@ input:checked+.tslider:before{transform:translateX(18px)}
     var c = prompt('ยืนยัน PIN อีกครั้ง:');
     if (newPin !== c) { toast('PIN ไม่ตรงกัน', 'err'); return; }
     ownerPin = newPin;
-    localStorage.setItem('mbp_pin', newPin);
-    toast('เปลี่ยน PIN สำเร็จ', 'ok');
+    // Save to Supabase - sync across all devices
+    fetch(SUPABASE_URL + '/rest/v1/settings?key=eq.owner_pin', {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ value: newPin })
+    }).then(function(res) {
+      if (res.ok) {
+        toast('เปลี่ยน PIN สำเร็จ — ใช้ได้ทุกเครื่องแล้ว', 'ok');
+      } else {
+        toast('เปลี่ยน PIN ไม่สำเร็จ', 'err');
+        ownerPin = '1234';
+      }
+    }).catch(function(err) {
+      console.error('Change PIN error:', err);
+      toast('เปลี่ยน PIN ไม่สำเร็จ', 'err');
+    });
   }
 
   function clearAllData() {
@@ -1716,6 +1819,10 @@ input:checked+.tslider:before{transform:translateX(18px)}
     el('btnConnectDrive').addEventListener('click', connectDrive);
     // Init Google Drive API
     initGoogleDrive();
+    // Init shop selection
+    selectShop(currentShop);
+    // Load PIN from Supabase
+    loadPinFromSupabase();
     el('btnExportSet').addEventListener('click', exportCSV);
     el('btnClearData').addEventListener('click', clearAllData);
 
