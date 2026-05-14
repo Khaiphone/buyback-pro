@@ -493,6 +493,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
       <button class="btn btn-primary" type="button" id="btnDlContract">ดาวน์โหลดสัญญาซื้อขาย</button>
       <button class="btn btn-gold" type="button" id="btnDlReceipt">ดาวน์โหลดใบสำคัญรับเงิน</button>
       <button class="btn btn-secondary" type="button" id="btnNewRecord">ทำรายการใหม่</button>
+      <button class="btn btn-outline" type="button" id="btnAddDevice" style="border-color:#FFD700;color:#FFD700">+ เพิ่มสินค้าอีกเครื่อง</button>
     </div>
   </div>
 </div>
@@ -1627,6 +1628,63 @@ input:checked+.tslider:before{transform:translateX(18px)}
   }
 
   // ===== NEW RECORD =====
+  function addAnotherDevice() {
+    // Keep customer info, reset only device + price + signature fields
+    // Reset device fields
+    el('d_brand').value = '';
+    el('d_storage').value = '256 GB';
+    el('d_color') && (el('d_color').value = '');
+    document.querySelectorAll('#d_model, #d_serial, #d_imei, #d_note').forEach(function(e) { if(e) e.value = ''; });
+    el('d_batt').value = '85%';
+    el('d_icloud').value = 'ปลดแล้ว';
+    el('d_warranty').value = 'ไม่มีประกัน / หมดแล้ว';
+    el('warrantyDateWrap').style.display = 'none';
+    el('warrantyLeft').textContent = '';
+    el('repairWrap').style.display = 'none';
+    el('funcProbWrap').style.display = 'none';
+    el('originOther').style.display = 'none';
+
+    // Reset condition pills
+    document.querySelectorAll('.cond-pill').forEach(function(p) { p.className = 'cond-pill'; });
+    document.querySelectorAll('#originPills .cond-pill')[0].className = 'cond-pill cp-green';
+    document.querySelectorAll('#screenPills .cond-pill')[0].className = 'cond-pill cp-green';
+    document.querySelectorAll('#bodyPills .cond-pill')[0].className = 'cond-pill cp-green';
+    document.querySelectorAll('#funcPills .cond-pill')[0].className = 'cond-pill cp-green';
+    sc_origin = 'ศูนย์ไทย (TH)'; sc_screen = 'ไม่มีรอย'; sc_body = 'ไม่มีรอย'; sc_func = 'ปกติทุกฟังก์ชัน'; grade = 'A';
+    document.querySelectorAll('.grade-btn').forEach(function(b) { b.className = 'grade-btn'; });
+    document.querySelectorAll('.grade-btn')[0].className = 'grade-btn sel';
+
+    // Reset price + payment
+    el('p_amount').value = '';
+    el('priceAmt').textContent = '0';
+    el('p_staff') && (el('p_staff').value = el('p_staff').value); // keep staff name
+    setPayment('cash');
+    slipData = '';
+    el('slipImg').style.display = 'none';
+    el('slipPh').style.display = 'block';
+    el('slipOk').style.display = 'none';
+
+    // Reset accessories
+    document.querySelectorAll('input[type=checkbox]').forEach(function(e) {
+      if (e.id !== 'pdpaConsent' && e.id !== 'repairTgl') e.checked = false;
+    });
+
+    // Reset signatures
+    sigBuyOK = false; sigHasBuy = false; sigSelOK = false; sigHasSel = false;
+    clearCanvas('buy'); clearCanvas('sel');
+    el('sigBuyOk').style.display = 'none';
+    el('sigSelOk').style.display = 'none';
+
+    // Reset doc
+    el('docWrap').style.display = 'none';
+    el('genBtnWrap').style.display = 'block';
+    el('docBadge').textContent = '--';
+
+    // Go to step 3 (device info) - skip customer info
+    gotoStep(3);
+    toast('กรอกข้อมูลสินค้าเครื่องถัดไปได้เลย', 'ok');
+  }
+
   function newRecord() {
     if (!confirm('เริ่มรายการใหม่?')) return;
     document.querySelectorAll('input[type=text],input[type=tel],input[type=number],textarea').forEach(function(e) { e.value = ''; });
@@ -1825,6 +1883,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
     el('btnDlContract').addEventListener('click', function() { dlDoc('contract'); });
     el('btnDlReceipt').addEventListener('click', function() { dlDoc('receipt'); });
     el('btnNewRecord').addEventListener('click', newRecord);
+    el('btnAddDevice').addEventListener('click', addAnotherDevice);
 
     // Dashboard / History
     el('btnExportDash').addEventListener('click', exportCSV);
