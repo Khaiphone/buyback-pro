@@ -671,7 +671,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
   // ===== GOOGLE APPS SCRIPT CONFIG =====
   var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzT9ZHIWeTIhAUbwFFst68T-8ktUQel0jDohUYrW19by3H0X2wVpjlCwa7qU44wHTA/exec';
 
-  function saveToDrive(contractHtml, receiptHtml, docNo) {
+  function saveToDrive(contractHtml, receiptHtml, docNo, shopName) {
     // Render contract HTML to PDF using html2canvas + jsPDF
     toast('กำลังสร้าง PDF...', '');
     
@@ -684,6 +684,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
           headers: { 'Content-Type': 'text/plain' },
           body: JSON.stringify({
             docNo: docNo,
+            shopName: shopName || 'Buyback Records',
             contractPdf: contractPdfBase64,
             receiptPdf: receiptPdfBase64
           })
@@ -1436,7 +1437,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
       var css2 = window._docCSS || '';
       var cFull = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' + fLink2 + '<style>' + css2 + '</style></head><body>' + window._contractHTML + '</body></html>';
       var rFull = '<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">' + fLink2 + '<style>' + css2 + '</style></head><body>' + window._receiptHTML + '</body></html>';
-      saveToDrive(cFull, rFull, window._docNo);
+      saveToDrive(cFull, rFull, window._docNo, getShop().name);
     }
     setTimeout(function() { el('docWrap').scrollIntoView({ behavior: 'smooth' }); }, 100); }, 700);
   }
