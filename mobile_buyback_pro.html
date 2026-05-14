@@ -1250,6 +1250,8 @@ input:checked+.tslider:before{transform:translateX(18px)}
     if (which === 'buy' && ctxBuyer) {
       ctxBuyer.fillStyle = '#f2f1ee'; ctxBuyer.fillRect(0, 0, canvBuyer.width, canvBuyer.height);
       sigHasBuy = false; sigBuyOK = false; el('sigBuyOk').style.display = 'none';
+      canvBuyer.style.pointerEvents = 'auto'; canvBuyer.style.opacity = '1'; canvBuyer.style.border = '';
+      el('btnConfirmBuyer').style.display = 'inline-flex'; el('btnClearBuyer').textContent = 'ล้าง';
     } else if (ctxSeller) {
       ctxSeller.fillStyle = '#f2f1ee'; ctxSeller.fillRect(0, 0, canvSeller.width, canvSeller.height);
       sigHasSel = false; sigSelOK = false; el('sigSelOk').style.display = 'none';
