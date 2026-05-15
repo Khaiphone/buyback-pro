@@ -714,6 +714,7 @@ function scanIDCard(base64Image) {
       if (parsed.name) { el('c_name').value = parsed.name; el('id_name').value = parsed.name; }
       if (parsed.idno) { el('c_id').value = parsed.idno; el('id_idno').value = parsed.idno; }
       if (parsed.address) { el('c_addr').value = parsed.address; el('id_addr').value = parsed.address; }
+      if (parsed.dob) { el('c_dob').value = parsed.dob; el('id_dob').value = parsed.dob; }
       var filled = [parsed.name, parsed.idno, parsed.address].filter(Boolean).length;
       if (filled > 0) {
         toast('อ่านบัตรสำเร็จ กรุณาตรวจสอบข้อมูล', 'ok');
