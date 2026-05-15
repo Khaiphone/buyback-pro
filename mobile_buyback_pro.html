@@ -1853,6 +1853,17 @@ function parseIDCard(text) {
     });
     el('idFile').addEventListener('change', function() { handleIDFile(this.files[0]); });
     el('btnShowIDForm').addEventListener('click', function() { el('idFormWrap').style.display = 'block'; });
+    // Sync หน้า 1 → หน้า 2
+el('id_name').addEventListener('input', function() { el('c_name').value = this.value; });
+el('id_idno').addEventListener('input', function() { el('c_id').value = this.value; });
+el('id_dob').addEventListener('input', function() { el('c_dob').value = this.value; });
+el('id_addr').addEventListener('input', function() { el('c_addr').value = this.value; });
+
+// Sync หน้า 2 → หน้า 1
+el('c_name').addEventListener('input', function() { el('id_name').value = this.value; });
+el('c_id').addEventListener('input', function() { el('id_idno').value = this.value; });
+el('c_dob').addEventListener('input', function() { el('id_dob').value = this.value; });
+el('c_addr').addEventListener('input', function() { el('id_addr').value = this.value; });
 
     // Pill groups
     var colorMap = function(v) {
