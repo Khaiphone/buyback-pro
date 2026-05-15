@@ -696,33 +696,20 @@ function scanIDCard(base64Image) {
   var base64Data = base64Image.split(',')[1];
   var mediaType = base64Image.split(';')[0].split(':')[1] || 'image/jpeg';
   showLoading('กำลังอ่านข้อมูลบัตร...');
-  fetch('https://api.anthropic.com/v1/messages', {
+  fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': CLAUDE_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
+    headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      messages: [{
-        role: 'user',
-        content: [{
-          type: 'image',
-          source: { type: 'base64', media_type: mediaType, data: base64Data }
-        }, {
-          type: 'text',
-          text: 'นี่คือรูปบัตรประชาชนไทย กรุณาอ่านและส่งกลับเป็น JSON เท่านั้น ไม่ต้องมีข้อความอื่น รูปแบบ: {"name":"ชื่อ-นามสกุล","idno":"เลข13หลัก","address":"ที่อยู่"}'
-        }]
-      }]
+      type: 'ocr',
+      image: base64Data,
+      mediaType: mediaType
     })
   }).then(function(res) { return res.json(); })
   .then(function(data) {
     hideLoading();
+    if (!data.success) { toast('อ่านบัตรไม่สำเร็จ', 'err'); return; }
     try {
-      var text = data.content[0].text;
-      var clean = text.replace(/```json|```/g, '').trim();
+      var clean = data.result.replace(/```json|```/g, '').trim();
       var parsed = JSON.parse(clean);
       if (parsed.name) { el('c_name').value = parsed.name; el('id_name').value = parsed.name; }
       if (parsed.idno) { el('c_id').value = parsed.idno; el('id_idno').value = parsed.idno; }
