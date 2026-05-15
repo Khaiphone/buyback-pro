@@ -309,7 +309,7 @@ input:checked+.tslider:before{transform:translateX(18px)}
         </div>
         <div class="field"><label>สี</label><input type="text" id="d_color" placeholder="Natural Titanium"></div>
       </div>
-      <div class="field"><label>Serial Number <span class="req">*</span></label><input type="text" id="d_serial" placeholder="XXXXXXXXXX" style="font-family:'IBM Plex Mono',monospace"></div>
+      <div class="field"><label>Serial Number <span class="req">*</span></label><input type="text" id="d_serial" placeholder="XXXXXXXXXX" style="font-family:'IBM Plex Mono',monospace;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
       <div class="field"><label>IMEI</label><input type="text" id="d_imei" placeholder="XXXXXXXXXXXXXXX" inputmode="numeric" style="font-family:'IBM Plex Mono',monospace" maxlength="15"></div>
       <div class="field"><label>แหล่งที่มา <span class="req">*</span></label>
         <div class="cond-group" id="originPills">
